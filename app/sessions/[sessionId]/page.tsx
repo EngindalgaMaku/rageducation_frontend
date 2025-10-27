@@ -135,6 +135,8 @@ export default function SessionPage() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [chunkPage, setChunkPage] = useState(1);
+  const CHUNKS_PER_PAGE = 10;
 
   // Form configuration state
   const [chunkStrategy, setChunkStrategy] = useState("markdown");
@@ -163,10 +165,10 @@ export default function SessionPage() {
       if (currentSession) {
         setSession(currentSession);
       } else {
-        setError("Oturum bulunamadı");
+        setError("Ders oturumu bulunamadı");
       }
     } catch (e: any) {
-      setError(e.message || "Oturum bilgileri yüklenemedi");
+      setError(e.message || "Ders oturumu bilgileri yüklenemedi");
     }
   };
 
@@ -256,7 +258,7 @@ export default function SessionPage() {
   if (!sessionId) {
     return (
       <div className="text-center py-12">
-        <div className="text-red-600">Geçersiz oturum ID</div>
+        <div className="text-red-600">Geçersiz ders oturumu ID</div>
       </div>
     );
   }
@@ -274,14 +276,16 @@ export default function SessionPage() {
             Tüm Oturumlara Geri Dön
           </Link>
           <h1 className="text-3xl font-bold text-foreground">
-            {session?.name || "Oturum Yükleniyor..."}
+            {session?.name || "Ders Oturumu Yükleniyor..."}
           </h1>
           <p className="text-muted-foreground text-md mt-1">
             {session?.description || ""}
           </p>
         </div>
         <div className="flex-shrink-0 text-right text-sm text-muted-foreground bg-card border border-border rounded-lg p-3">
-          <div className="font-mono">ID: {sessionId.substring(0, 12)}...</div>
+          <div className="font-mono">
+            Ders Oturumu ID: {sessionId.substring(0, 12)}...
+          </div>
           {session && (
             <div className="mt-1 font-medium">
               {session.document_count} belge • {session.total_chunks} parça
@@ -460,7 +464,7 @@ export default function SessionPage() {
             </div>
             <div>
               <h2 className="text-xl font-bold text-foreground">
-                Oturum Parçaları ({chunks.length})
+                Ders Oturumu Parçaları ({chunks.length})
               </h2>
               <p className="text-sm text-muted-foreground">
                 Vektör veritabanında oluşturulan tüm metin parçaları
@@ -490,22 +494,61 @@ export default function SessionPage() {
               <ChunkIcon />
             </div>
             <p className="text-muted-foreground">
-              Bu oturum için henüz parça bulunmuyor
+              Bu ders oturumu için henüz parça bulunmuyor
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               Yukarıdan RAG konfigürasyonu çalıştırın
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {chunks.map((chunk, index) => (
-              <ChunkCard
-                key={`${chunk.document_name}-${chunk.chunk_index}`}
-                chunk={chunk}
-                index={index}
-              />
-            ))}
-          </div>
+          <>
+            <div className="space-y-4">
+              {chunks
+                .slice(
+                  (chunkPage - 1) * CHUNKS_PER_PAGE,
+                  chunkPage * CHUNKS_PER_PAGE
+                )
+                .map((chunk, index) => (
+                  <ChunkCard
+                    key={`${chunk.document_name}-${chunk.chunk_index}`}
+                    chunk={chunk}
+                    index={index}
+                  />
+                ))}
+            </div>
+            {/* Pagination for Chunks */}
+            {chunks.length > CHUNKS_PER_PAGE && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+                <button
+                  onClick={() => setChunkPage((p) => Math.max(1, p - 1))}
+                  disabled={chunkPage === 1}
+                  className="btn btn-secondary"
+                >
+                  Önceki
+                </button>
+                <span className="text-sm text-muted-foreground">
+                  Sayfa {chunkPage} /{" "}
+                  {Math.ceil(chunks.length / CHUNKS_PER_PAGE)}
+                </span>
+                <button
+                  onClick={() =>
+                    setChunkPage((p) =>
+                      Math.min(
+                        Math.ceil(chunks.length / CHUNKS_PER_PAGE),
+                        p + 1
+                      )
+                    )
+                  }
+                  disabled={
+                    chunkPage >= Math.ceil(chunks.length / CHUNKS_PER_PAGE)
+                  }
+                  className="btn btn-secondary"
+                >
+                  Sonraki
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

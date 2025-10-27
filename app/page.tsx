@@ -68,7 +68,7 @@ function SessionCard({
 }) {
   return (
     <div
-      className="bg-card rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 border-l-4 border-primary cursor-pointer p-6 animate-slide-up"
+      className="group bg-card rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 border-l-4 border-primary cursor-pointer p-6 animate-slide-up"
       style={{ animationDelay: `${index * 0.1}s` }}
       onClick={() => onNavigate(session.session_id)}
     >
@@ -95,7 +95,7 @@ function SessionCard({
             </div>
           </div>
         </div>
-        <div className="ml-4 flex flex-col items-end">
+        <div className="ml-4 flex flex-col items-end justify-between h-full">
           <div
             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               session.status === "active"
@@ -110,9 +110,12 @@ function SessionCard({
             ></div>
             {session.status === "active" ? "Aktif" : "Pasif"}
           </div>
-          <span className="text-xs text-muted-foreground mt-2">
-            {new Date(session.updated_at).toLocaleDateString("tr-TR")}
-          </span>
+          <div className="flex items-center text-sm text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-2">
+            <span>Ayarları Görüntüle</span>
+            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </div>
         </div>
       </div>
     </div>
@@ -222,6 +225,8 @@ export default function HomePage() {
   const [selectedSessionId, setSelectedSessionId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessionPage, setSessionPage] = useState(1);
+  const SESSIONS_PER_PAGE = 5;
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "sessions" | "upload" | "query"
   >("dashboard");
@@ -234,7 +239,8 @@ export default function HomePage() {
   const [category, setCategory] = useState("research");
   const [file, setFile] = useState<File | null>(null);
   const [query, setQuery] = useState("");
-  const [answer, setAnswer] = useState("");
+  const [chatHistory, setChatHistory] = useState<{ user: string; bot: string }[]>([]);
+  const [isQuerying, setIsQuerying] = useState(false);
   const [uploadStats, setUploadStats] = useState<any>(null);
 
   // Model selection states
@@ -260,6 +266,8 @@ export default function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFileContent, setSelectedFileContent] = useState<string>("");
   const [isLoadingContent, setIsLoadingContent] = useState(false);
+  const [isCreateSessionModalOpen, setIsCreateSessionModalOpen] =
+    useState(false);
   const [selectedFileName, setSelectedFileName] = useState<string>("");
   const [modalError, setModalError] = useState<string | null>(null);
 
@@ -285,15 +293,12 @@ export default function HomePage() {
       const data = await listSessions();
       setSessions(data);
 
-      // Auto-select the most recent session only on initial load
       if (!selectedSessionId && data.length > 0) {
-        // Sort sessions by updated_at timestamp in descending order (most recent first)
         const sortedSessions = [...data].sort(
           (a, b) =>
             new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
         );
-        // Set the most recent session as selected
-        setSelectedSessionId(sortedSessions[0].session_id);
+        setSelectedSessionId(sortedSessions.session_id);
       }
     } catch (e: any) {
       setError(e.message || "Oturumlar yüklenemedi");
@@ -314,7 +319,7 @@ export default function HomePage() {
       });
       await refreshSessions();
       setSelectedSessionId(session.session_id);
-      setActiveTab("upload");
+      setIsCreateSessionModalOpen(false);
     } catch (e: any) {
       setError(e.message || "Oluşturma başarısız");
     }
@@ -344,22 +349,41 @@ export default function HomePage() {
 
   async function handleQuery(e: FormEvent) {
     e.preventDefault();
-    if (!selectedSessionId || !query) return;
+    if (!selectedSessionId || !query.trim()) return;
+
+    const userMessage = query;
+    setQuery("");
+    setIsQuerying(true);
+    setError(null);
+
+    setChatHistory((prev) => [...prev, { user: userMessage, bot: "..." }]);
 
     try {
-      setError(null);
       const result = await ragQuery({
         session_id: selectedSessionId,
-        query,
+        query: userMessage,
         top_k: 5,
         use_rerank: true,
         min_score: 0.1,
         max_context_chars: 8000,
-        model: selectedQueryModel, // Include selected model
+        model: selectedQueryModel,
       });
-      setAnswer(result.answer);
+
+      setChatHistory((prev) => {
+        const newHistory = [...prev];
+        newHistory[newHistory.length - 1].bot = result.answer;
+        return newHistory;
+      });
     } catch (e: any) {
-      setError(e.message || "Sorgu başarısız");
+      const errorMessage = e.message || "Sorgu başarısız oldu";
+      setError(errorMessage);
+      setChatHistory((prev) => {
+        const newHistory = [...prev];
+        newHistory[newHistory.length - 1].bot = `Hata: ${errorMessage}`;
+        return newHistory;
+      });
+    } finally {
+      setIsQuerying(false);
     }
   }
 
@@ -370,9 +394,8 @@ export default function HomePage() {
       const data = await listAvailableModels();
       setAvailableModels(data.models);
 
-      // Auto-select the first model if none is selected
       if (!selectedQueryModel && data.models.length > 0) {
-        setSelectedQueryModel(data.models[0]);
+        setSelectedQueryModel(data.models);
       }
     } catch (e: any) {
       setError(e.message || "Modeller yüklenemedi");
@@ -411,7 +434,6 @@ export default function HomePage() {
         message: result.message,
       });
 
-      // Clear selections and refresh data
       setSelectedMarkdownFiles([]);
       await refreshSessions();
     } catch (e: any) {
@@ -429,7 +451,6 @@ export default function HomePage() {
     );
   }
 
-  // PDF to Markdown conversion handlers
   const handlePdfUpload = async (e: FormEvent) => {
     e.preventDefault();
     if (!selectedFile) return;
@@ -446,13 +467,11 @@ export default function HomePage() {
           `PDF başarıyla Markdown formatına dönüştürüldü: ${result.markdown_filename}`
         );
         setSelectedFile(null);
-        // Reset the file input
         const fileInput = document.getElementById(
           "pdf-file"
         ) as HTMLInputElement;
         if (fileInput) fileInput.value = "";
 
-        // Refresh the markdown files list after successful conversion
         setTimeout(async () => {
           await fetchMarkdownFiles();
         }, 1000);
@@ -466,7 +485,6 @@ export default function HomePage() {
     }
   };
 
-  // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(true);
@@ -482,8 +500,8 @@ export default function HomePage() {
     setIsDragOver(false);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      const file = files[0];
-      if (file.type === "application/pdf") {
+      const file = files;
+      if (file && file.type === "application/pdf") {
         setSelectedFile(file);
         setError(null);
       } else {
@@ -493,14 +511,13 @@ export default function HomePage() {
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.;
     if (file) {
       setSelectedFile(file);
       setError(null);
     }
   };
 
-  // Modal viewer handlers
   const handleViewMarkdownFile = async (filename: string) => {
     try {
       setIsLoadingContent(true);
@@ -526,7 +543,6 @@ export default function HomePage() {
     setIsLoadingContent(false);
   };
 
-  // Navigate to session page
   const handleNavigateToSession = (sessionId: string) => {
     router.push(`/sessions/${sessionId}`);
   };
@@ -535,14 +551,12 @@ export default function HomePage() {
     refreshSessions();
   }, []);
 
-  // Fetch markdown files when upload tab is selected
   useEffect(() => {
     if (activeTab === "upload" && markdownFiles.length === 0) {
       fetchMarkdownFiles();
     }
   }, [activeTab]);
 
-  // Fetch available models when query tab is selected
   useEffect(() => {
     if (activeTab === "query" && availableModels.length === 0) {
       fetchAvailableModels();
@@ -551,21 +565,19 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
-      {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
           <div className="text-red-800">{error}</div>
         </div>
       )}
 
-      {/* Enhanced Tab Navigation */}
       <div className="border-b border-border bg-card/50 rounded-t-lg">
         <nav className="flex space-x-1 p-1">
           {[
             { id: "dashboard", name: "Panel", icon: <ChartIcon /> },
             { id: "sessions", name: "Oturumlar", icon: <SessionIcon /> },
             { id: "upload", name: "Belge Yönetimi", icon: <DocumentIcon /> },
-            { id: "query", name: "RAG Sorgusu", icon: <QueryIcon /> },
+            { id: "query", name: "RAG Tabanlı Chatbot", icon: <QueryIcon /> },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -581,15 +593,13 @@ export default function HomePage() {
         </nav>
       </div>
 
-      {/* Dashboard Tab */}
       {activeTab === "dashboard" && (
         <div className="space-y-6">
-          {/* Statistics Cards */}
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <StatsCard
-              title="Toplam Oturum"
+              title="Toplam Ders Oturumu"
               value={totalSessions}
-              description="Aktif çalışma oturumları"
+              description="Aktif ders oturumları"
               icon={<SessionIcon />}
               color="primary"
             />
@@ -616,15 +626,12 @@ export default function HomePage() {
             />
           </div>
 
-          {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Recent Sessions */}
               <div className="bg-card p-6 rounded-xl shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-foreground">
-                    Son Oturumlar
+                    Son Ders Oturumları
                   </h2>
                   <button
                     onClick={refreshSessions}
@@ -651,16 +658,15 @@ export default function HomePage() {
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                       <SessionIcon />
                     </div>
-                    <p className="font-medium">Henüz oturum bulunmuyor</p>
+                    <p className="font-medium">Henüz ders oturumu bulunmuyor</p>
                     <p className="text-sm mt-1">
-                      "Oturumlar" sekmesinden yeni bir oturum oluşturun.
+                      "Ders Oturumları" sekmesinden yeni bir oturum oluşturun.
                     </p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Right Column */}
             <div className="lg:col-span-1">
               <ChangelogCard />
             </div>
@@ -668,111 +674,113 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Sessions Tab */}
       {activeTab === "sessions" && (
-        <div className="space-y-6">
-          <div className="bg-card p-8 rounded-xl shadow-lg">
-            <h2 className="text-xl font-bold text-foreground mb-6">
-              Yeni Oturum Oluştur
-            </h2>
-            <form onSubmit={handleCreateSession} className="space-y-6">
-              <div
-                className="animate-slide-up"
-                style={{ animationDelay: "0.1s" }}
+        <div className="space-y-8">
+          <div className="alert alert-info">
+            <div className="flex items-start">
+              <svg
+                className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
               >
-                <label htmlFor="name" className="label">
-                  Oturum Adı
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="input"
-                  required
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clipRule="evenodd"
                 />
+              </svg>
+              <div>
+                <h3 className="font-bold">Nasıl Çalışır?</h3>
+                <p className="text-sm mt-1">
+                  Bir ders oturumunun üzerine tıklayarak o oturuma ait Markdown
+                  dosyalarını seçebilir, RAG ayarlarını yapılandırabilir ve RAG
+                  işlemini başlatabilirsiniz.
+                </p>
               </div>
-              <div
-                className="animate-slide-up"
-                style={{ animationDelay: "0.2s" }}
-              >
-                <label htmlFor="description" className="label">
-                  Açıklama
-                </label>
-                <textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="input"
-                  rows={3}
-                />
-              </div>
-              <div
-                className="animate-slide-up"
-                style={{ animationDelay: "0.3s" }}
-              >
-                <label htmlFor="category" className="label">
-                  Kategori
-                </label>
-                <select
-                  id="category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="input"
-                >
-                  <option value="research">🔬 Araştırma</option>
-                  <option value="education">📚 Eğitim</option>
-                  <option value="analysis">📊 Analiz</option>
-                </select>
-              </div>
-              <div
-                className="animate-slide-up pt-2"
-                style={{ animationDelay: "0.4s" }}
-              >
-                <button type="submit" className="btn btn-primary group w-full">
-                  <svg
-                    className="w-5 h-5 mr-2 group-hover:rotate-90 transition-transform duration-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                  <span>Oturum Oluştur</span>
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
 
-          {/* All Sessions */}
-          <div className="card">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
-              Tüm Oturumlar
-            </h2>
-            {sessions.length > 0 ? (
-              <div className="space-y-3">
-                {sessions.map((session, index) => (
-                  <SessionCard
-                    key={session.session_id}
-                    session={session}
-                    onNavigate={handleNavigateToSession}
-                    index={index}
+          <div className="bg-card p-6 rounded-xl shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-foreground">
+                Tüm Ders Oturumları
+              </h2>
+              <button
+                onClick={() => setIsCreateSessionModalOpen(true)}
+                className="btn btn-primary"
+              >
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                   />
-                ))}
-              </div>
+                </svg>
+                <span>Yeni Ders Oturumu</span>
+              </button>
+            </div>
+            {sessions.length > 0 ? (
+              <>
+                <div className="space-y-4">
+                  {sessions
+                    .slice(
+                      (sessionPage - 1) * SESSIONS_PER_PAGE,
+                      sessionPage * SESSIONS_PER_PAGE
+                    )
+                    .map((session, index) => (
+                      <SessionCard
+                        key={session.session_id}
+                        session={session}
+                        onNavigate={handleNavigateToSession}
+                        index={index}
+                      />
+                    ))}
+                </div>
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+                  <button
+                    onClick={() => setSessionPage((p) => Math.max(1, p - 1))}
+                    disabled={sessionPage === 1}
+                    className="btn btn-secondary"
+                  >
+                    Önceki
+                  </button>
+                  <span className="text-sm text-muted-foreground">
+                    Sayfa {sessionPage} /{" "}
+                    {Math.ceil(sessions.length / SESSIONS_PER_PAGE)}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setSessionPage((p) =>
+                        Math.min(
+                          Math.ceil(sessions.length / SESSIONS_PER_PAGE),
+                          p + 1
+                        )
+                      )
+                    }
+                    disabled={
+                      sessionPage >=
+                      Math.ceil(sessions.length / SESSIONS_PER_PAGE)
+                    }
+                    className="btn btn-secondary"
+                  >
+                    Sonraki
+                  </button>
+                </div>
+              </>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-12 text-muted-foreground">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                   <SessionIcon />
                 </div>
-                <p className="text-sm">Henüz oturum bulunmuyor</p>
-                <p className="text-xs mt-1 opacity-75">
-                  Yukarıdan yeni bir oturum oluşturun
+                <p className="font-medium">Henüz ders oturumu bulunmuyor</p>
+                <p className="text-sm mt-1">
+                  Başlamak için yeni bir ders oturumu oluşturun.
                 </p>
               </div>
             )}
@@ -780,10 +788,8 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Upload Tab - Now shows both PDF conversion and Markdown File Selection */}
       {activeTab === "upload" && (
         <div className="space-y-6">
-          {/* PDF to Markdown Conversion Section */}
           <div className="bg-card p-8 rounded-xl shadow-lg">
             <div className="flex items-center mb-6">
               <div className="p-3 bg-primary/10 text-primary rounded-xl mr-4">
@@ -884,7 +890,6 @@ export default function HomePage() {
             </form>
           </div>
 
-          {/* Markdown File Selection Section */}
           <div className="card">
             <h2 className="text-lg font-medium text-gray-900 mb-4">
               Oturuma Markdown Belgeleri Ekle
@@ -892,13 +897,13 @@ export default function HomePage() {
             {!selectedSessionId ? (
               <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
                 <p className="text-yellow-800">
-                  Belge eklemek için önce bir oturum seçin.
+                  Belge eklemek için önce bir ders oturumu seçin.
                 </p>
               </div>
             ) : (
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-blue-800 text-sm">
-                  Seçili oturum:{" "}
+                  Seçili ders oturumu:{" "}
                   <strong>
                     {
                       sessions.find((s) => s.session_id === selectedSessionId)
@@ -1068,7 +1073,7 @@ export default function HomePage() {
                             d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                           />
                         </svg>
-                        {`Seçili Dokümanları Oturuma Ekle (${selectedMarkdownFiles.length})`}
+                        {`Seçili Dokümanları Ders Oturumuna Ekle (${selectedMarkdownFiles.length})`}
                       </div>
                     )}
                   </button>
@@ -1097,22 +1102,20 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Query Tab */}
+      {/* Query Tab - Chatbot Interface */}
       {activeTab === "query" && (
-        <div className="card">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
-            RAG Sorgusu
-          </h2>
-          {!selectedSessionId ? (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
-              <p className="text-yellow-800">
-                Sorgu yapmak için önce bir oturum seçin.
+        <div className="bg-card rounded-xl shadow-lg flex flex-col h-[70vh]">
+          <div className="p-4 border-b border-border">
+            <h2 className="text-lg font-bold text-foreground">
+              RAG Tabanlı Chatbot
+            </h2>
+            {!selectedSessionId ? (
+              <p className="text-xs text-yellow-600">
+                Sohbeti başlatmak için bir ders oturumu seçin.
               </p>
-            </div>
-          ) : (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <p className="text-blue-800 text-sm">
-                Seçili oturum:{" "}
+            ) : (
+              <p className="text-xs text-green-600">
+                Seçili ders oturumu:{" "}
                 <strong>
                   {
                     sessions.find((s) => s.session_id === selectedSessionId)
@@ -1120,69 +1123,68 @@ export default function HomePage() {
                   }
                 </strong>
               </p>
-            </div>
-          )}
+            )}
+          </div>
 
-          <form onSubmit={handleQuery} className="space-y-6">
-            <div className="animate-slide-up">
-              <label htmlFor="model-select" className="label">
-                Model Seçimi
-              </label>
-              {modelsLoading ? (
-                <div className="flex items-center justify-center p-4 border border-gray-300 rounded-md bg-gray-50">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent mr-2"></div>
-                  <span className="text-sm text-muted-foreground">
-                    Modeller yükleniyor...
-                  </span>
+          {/* Chat History */}
+          <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+            {chatHistory.map((chat, index) => (
+              <div key={index} className="space-y-4">
+                {/* User Message */}
+                <div className="flex justify-end">
+                  <div className="bg-primary text-primary-foreground p-3 rounded-lg max-w-lg">
+                    {chat.user}
+                  </div>
                 </div>
-              ) : (
-                <select
-                  id="model-select"
-                  value={selectedQueryModel}
-                  onChange={(e) => setSelectedQueryModel(e.target.value)}
-                  className="input hover:shadow-md focus:shadow-lg transition-all duration-200"
-                  required
-                >
-                  {availableModels.length === 0 ? (
-                    <option value="">Model bulunamadı</option>
-                  ) : (
-                    availableModels.map((model) => (
-                      <option key={model} value={model}>
-                        {model}
-                      </option>
-                    ))
-                  )}
-                </select>
-              )}
-            </div>
-            <div
-              className="animate-slide-up"
-              style={{ animationDelay: "0.1s" }}
-            >
-              <label htmlFor="query" className="label">
-                Soru
-              </label>
-              <textarea
-                id="query"
+                {/* Bot Message */}
+                <div className="flex justify-start">
+                  <div className="bg-muted p-3 rounded-lg max-w-lg">
+                    {chat.bot === "..." ? (
+                      <div className="flex items-center space-x-2">
+                        <div
+                          className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                          style={{ animationDelay: "0ms" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                          style={{ animationDelay: "150ms" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                          style={{ animationDelay: "300ms" }}
+                        ></div>
+                      </div>
+                    ) : (
+                      <p className="whitespace-pre-wrap">{chat.bot}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Chat Input */}
+          <div className="p-4 border-t border-border">
+            <form onSubmit={handleQuery} className="flex items-center gap-4">
+              <input
+                type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="input hover:shadow-md focus:shadow-lg transition-all duration-200 min-h-[100px]"
-                rows={4}
-                placeholder="Belgelerde aramak istediğiniz soruyu yazın..."
-                required
+                className="input flex-1"
+                placeholder={
+                  !selectedSessionId
+                    ? "Lütfen önce bir ders oturumu seçin..."
+                    : "Sorunuzu buraya yazın..."
+                }
+                disabled={!selectedSessionId || isQuerying}
               />
-            </div>
-            <div
-              className="animate-slide-up"
-              style={{ animationDelay: "0.2s" }}
-            >
               <button
                 type="submit"
-                className="btn btn-primary group w-full sm:w-auto"
-                disabled={!selectedSessionId || !query}
+                className="btn btn-primary"
+                disabled={!selectedSessionId || !query.trim() || isQuerying}
               >
                 <svg
-                  className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200"
+                  className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1191,24 +1193,83 @@ export default function HomePage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    d="M5 13l4 4L19 7"
                   />
                 </svg>
-                Sorguyu Çalıştır
+                <span>Gönder</span>
               </button>
-            </div>
-          </form>
-
-          {answer && (
-            <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-md">
-              <h3 className="text-gray-900 font-medium mb-2">RAG Cevabı:</h3>
-              <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                {answer}
-              </div>
-            </div>
-          )}
+            </form>
+          </div>
         </div>
       )}
+
+      {/* Create Session Modal */}
+      <Modal
+        isOpen={isCreateSessionModalOpen}
+        onClose={() => setIsCreateSessionModalOpen(false)}
+        title="Yeni Ders Oturumu Oluştur"
+      >
+        <form onSubmit={handleCreateSession} className="space-y-6">
+          <div>
+            <label htmlFor="name" className="label">
+              Ders Oturumu Adı
+            </label>
+            <input
+              type="text"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="input"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="description" className="label">
+              Açıklama
+            </label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="input"
+              rows={3}
+            />
+          </div>
+          <div>
+            <label htmlFor="category" className="label">
+              Kategori
+            </label>
+            <select
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="input"
+            >
+              <option value="research">🔬 Araştırma</option>
+              <option value="education">📚 Eğitim</option>
+              <option value="analysis">📊 Analiz</option>
+            </select>
+          </div>
+          <div className="pt-2">
+            <button type="submit" className="btn btn-primary group w-full">
+              <svg
+                className="w-5 h-5 mr-2 group-hover:rotate-90 transition-transform duration-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              <span>Ders Oturumu Oluştur</span>
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Markdown Viewer Modal */}
       <Modal

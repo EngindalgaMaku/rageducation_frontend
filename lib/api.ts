@@ -181,6 +181,22 @@ export async function configureAndProcess(data: {
   return res.json();
 }
 
+export async function checkApiHealth(): Promise<{ status: string }> {
+  try {
+    const res = await fetch(`${API_URL}/health`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000), // 5-saniyelik zaman aşımı
+    });
+    if (!res.ok) {
+      throw new Error(`API ${res.status} durum kodu döndürdü`);
+    }
+    return await res.json();
+  } catch (error) {
+    // Bu kısım network hatalarını ve zaman aşımlarını yakalar
+    throw new Error("API sağlık kontrolü başarısız oldu");
+  }
+}
+
 export async function listAvailableModels(): Promise<{ models: string[] }> {
   const res = await fetch(`${API_URL}/models/list`, {
     cache: "no-store",

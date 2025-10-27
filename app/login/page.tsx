@@ -41,7 +41,7 @@ export default function LoginPage() {
             Öğretmen Paneli
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Burdur Mehmet Akif Ersoy Üniversitesi
+            Yüksek Lisans Tezi Projesi
           </p>
         </div>
         <form className="space-y-6" onSubmit={handleLogin}>
