@@ -298,7 +298,7 @@ export default function HomePage() {
           (a, b) =>
             new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
         );
-        setSelectedSessionId(sortedSessions.session_id);
+        setSelectedSessionId(sortedSessions[0].session_id);
       }
     } catch (e: any) {
       setError(e.message || "Oturumlar yüklenemedi");
@@ -395,7 +395,7 @@ export default function HomePage() {
       setAvailableModels(data.models);
 
       if (!selectedQueryModel && data.models.length > 0) {
-        setSelectedQueryModel(data.models);
+        setSelectedQueryModel(data.models[0]);
       }
     } catch (e: any) {
       setError(e.message || "Modeller yüklenemedi");
@@ -500,7 +500,7 @@ export default function HomePage() {
     setIsDragOver(false);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      const file = files;
+      const file = files[0];
       if (file && file.type === "application/pdf") {
         setSelectedFile(file);
         setError(null);
@@ -511,10 +511,14 @@ export default function HomePage() {
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.;
+    const file = e.target.files?.[0] || null;
     if (file) {
-      setSelectedFile(file);
-      setError(null);
+      if (file.type === "application/pdf") {
+        setSelectedFile(file);
+        setError(null);
+      } else {
+        setError("Lütfen sadece PDF dosyası seçin");
+      }
     }
   };
 
