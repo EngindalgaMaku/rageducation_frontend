@@ -1250,8 +1250,21 @@ export default function HomePage() {
               className="input"
             >
               <option value="research">🔬 Araştırma</option>
-              <option value="education">📚 Eğitim</option>
-              <option value="analysis">📊 Analiz</option>
+              <option value="general">📚 Genel</option>
+              <option value="exam_prep">📝 Sınav Hazırlık</option>
+              <option value="science">🔭 Fen Bilimleri</option>
+              <option value="mathematics">➗ Matematik</option>
+              <option value="language">🗣️ Dil</option>
+              <option value="social_studies">🌍 Sosyal Bilgiler</option>
+              <option value="history">🏛️ Tarih</option>
+              <option value="geography">🗺️ Coğrafya</option>
+              <option value="biology">🧬 Biyoloji</option>
+              <option value="chemistry">⚗️ Kimya</option>
+              <option value="physics">🧲 Fizik</option>
+              <option value="computer_science">💻 Bilgisayar Bil.</option>
+              <option value="art">🎨 Sanat</option>
+              <option value="music">🎵 Müzik</option>
+              <option value="physical_education">🏃‍♂️ Beden Eğitimi</option>
             </select>
           </div>
           <div className="pt-2">
