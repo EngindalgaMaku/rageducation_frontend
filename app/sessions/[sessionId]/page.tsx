@@ -92,32 +92,30 @@ const PlayIcon = () => (
 function ChunkCard({ chunk, index }: { chunk: Chunk; index: number }) {
   return (
     <div
-      className="card hover:shadow-md transition-all duration-200 animate-slide-up"
+      className="bg-card border border-border rounded-xl p-4 animate-slide-up transition-all duration-300 hover:border-primary/50 hover:shadow-lg"
       style={{ animationDelay: `${index * 0.05}s` }}
     >
       <div className="flex items-start gap-4">
-        <div className="flex-shrink-0">
-          <div className="w-10 h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
-            <ChunkIcon />
-          </div>
+        <div className="flex-shrink-0 w-10 h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center font-bold text-lg">
+          {chunk.chunk_index}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-foreground truncate">
-              {chunk.document_name}
-            </h3>
-            <span className="inline-flex items-center px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full">
-              Parça #{chunk.chunk_index}
-            </span>
-          </div>
-          <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3 max-h-32 overflow-y-auto">
-            <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed">
-              {chunk.chunk_text}
-            </pre>
-          </div>
-          <div className="mt-2 text-xs text-muted-foreground">
+          <p className="text-sm font-semibold text-foreground truncate">
+            {chunk.document_name}
+          </p>
+          <p className="text-xs text-muted-foreground">
             {chunk.chunk_text.length} karakter
-          </div>
+          </p>
+          <details className="mt-2 group">
+            <summary className="text-xs text-primary cursor-pointer group-hover:underline">
+              İçeriği Görüntüle
+            </summary>
+            <div className="mt-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3 max-h-48 overflow-y-auto">
+              <p className="whitespace-pre-wrap font-sans text-xs leading-relaxed">
+                {chunk.chunk_text}
+              </p>
+            </div>
+          </details>
         </div>
       </div>
     </div>
@@ -264,30 +262,28 @@ export default function SessionPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
           <Link
             href="/"
-            className="btn btn-secondary flex items-center gap-2 hover:scale-105 transition-transform"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-2"
           >
             <BackIcon />
-            Ana Sayfa
+            Tüm Oturumlara Geri Dön
           </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              {session?.name || "Oturum Yükleniyor..."}
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              {session?.description || ""}
-            </p>
-          </div>
+          <h1 className="text-3xl font-bold text-foreground">
+            {session?.name || "Oturum Yükleniyor..."}
+          </h1>
+          <p className="text-muted-foreground text-md mt-1">
+            {session?.description || ""}
+          </p>
         </div>
-        <div className="text-right text-sm text-muted-foreground">
-          <div>Oturum ID: {sessionId.substring(0, 8)}...</div>
+        <div className="flex-shrink-0 text-right text-sm text-muted-foreground bg-card border border-border rounded-lg p-3">
+          <div className="font-mono">ID: {sessionId.substring(0, 12)}...</div>
           {session && (
-            <div className="mt-1">
+            <div className="mt-1 font-medium">
               {session.document_count} belge • {session.total_chunks} parça
             </div>
           )}
@@ -308,14 +304,19 @@ export default function SessionPage() {
       )}
 
       {/* RAG Configuration Section */}
-      <div className="card">
+      <div className="bg-card p-8 rounded-xl shadow-lg">
         <div className="flex items-center mb-6">
-          <div className="p-2 bg-primary/10 text-primary rounded-md mr-3">
+          <div className="p-3 bg-primary/10 text-primary rounded-xl mr-4">
             <ConfigIcon />
           </div>
-          <h2 className="text-lg font-medium text-foreground">
-            RAG Konfigürasyonu ve İşlem
-          </h2>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">
+              RAG Konfigürasyonu
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Belgeleri parçalara ayırın ve vektör veritabanını oluşturun
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleConfigureAndProcess} className="space-y-6">
@@ -451,20 +452,25 @@ export default function SessionPage() {
       </div>
 
       {/* Chunks Visualization Section */}
-      <div className="card">
+      <div className="bg-card p-8 rounded-xl shadow-lg">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
-            <div className="p-2 bg-blue-500/10 text-blue-600 rounded-md mr-3">
+            <div className="p-3 bg-primary/10 text-primary rounded-xl mr-4">
               <ChunkIcon />
             </div>
-            <h2 className="text-lg font-medium text-foreground">
-              Metin Parçaları ({chunks.length})
-            </h2>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">
+                Oturum Parçaları ({chunks.length})
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Vektör veritabanında oluşturulan tüm metin parçaları
+              </p>
+            </div>
           </div>
           <button
             onClick={fetchChunks}
             disabled={loading}
-            className="btn btn-secondary text-sm"
+            className="btn btn-secondary"
           >
             {loading ? "Yenileniyor..." : "Yenile"}
           </button>

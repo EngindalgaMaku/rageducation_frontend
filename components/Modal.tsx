@@ -48,77 +48,52 @@ export default function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto"
       role="dialog"
       aria-modal="true"
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 animate-fade-in"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal Content */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div
-          className={`relative w-full ${sizeClasses[size]} transform overflow-hidden rounded-lg bg-white shadow-2xl transition-all animate-slide-up`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
+      <div
+        className={`relative w-full ${sizeClasses[size]} m-4 transform overflow-hidden rounded-2xl bg-card shadow-2xl transition-all duration-300 animate-scale-in`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between p-6 border-b border-border">
           {title && (
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
-              <h2 className="text-lg font-semibold text-gray-900 truncate">
-                {title}
-              </h2>
-              <button
-                onClick={onClose}
-                className="flex-shrink-0 ml-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label="Close modal"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
+            <h2 className="text-xl font-bold text-foreground truncate">
+              {title}
+            </h2>
           )}
-
-          {/* No title but still need close button */}
-          {!title && (
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 z-10 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-              aria-label="Close modal"
+          <button
+            onClick={onClose}
+            className="p-2 -m-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
+            aria-label="Close modal"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          )}
-
-          {/* Content */}
-          <div className={title ? "px-6 py-4" : "p-6"}>{children}</div>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
         </div>
+
+        {/* Content */}
+        <div className="p-6 max-h-[70vh] overflow-y-auto">{children}</div>
       </div>
     </div>
   );

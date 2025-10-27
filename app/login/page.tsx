@@ -1,0 +1,91 @@
+"use client";
+import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
+
+export default function LoginPage() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  const handleLogin = (e: FormEvent) => {
+    e.preventDefault();
+    if (username === "admin" && password === "admin") {
+      localStorage.setItem("isAuthenticated", "true");
+      router.push("/");
+    } else {
+      setError("Geçersiz kullanıcı adı veya şifre.");
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-2xl shadow-2xl animate-fade-in">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <svg
+              className="w-10 h-10 text-primary-foreground"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold text-foreground">
+            Öğretmen Paneli
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Burdur Mehmet Akif Ersoy Üniversitesi
+          </p>
+        </div>
+        <form className="space-y-6" onSubmit={handleLogin}>
+          <div className="space-y-2">
+            <label htmlFor="username" className="label">
+              Kullanıcı Adı
+            </label>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="input"
+              required
+              autoComplete="username"
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="password" className="label">
+              Şifre
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="input"
+              required
+              autoComplete="current-password"
+            />
+          </div>
+          {error && (
+            <p className="text-sm text-destructive text-center">{error}</p>
+          )}
+          <div>
+            <button
+              type="submit"
+              className="btn btn-primary w-full text-lg py-3 mt-2"
+            >
+              Giriş Yap
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

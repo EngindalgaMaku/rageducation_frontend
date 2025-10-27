@@ -188,3 +188,31 @@ export async function listAvailableModels(): Promise<{ models: string[] }> {
   if (!res.ok) throw new Error("Failed to fetch available models");
   return res.json();
 }
+
+// Changelog types and functions
+export type ChangelogEntry = {
+  id: number;
+  version: string;
+  date: string;
+  changes: string[];
+};
+
+export async function getChangelog(): Promise<ChangelogEntry[]> {
+  const res = await fetch(`${API_URL}/changelog`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch changelog");
+  return res.json();
+}
+
+export async function createChangelogEntry(data: {
+  version: string;
+  date: string;
+  changes: string[];
+}): Promise<ChangelogEntry> {
+  const res = await fetch(`${API_URL}/changelog`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}

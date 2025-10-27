@@ -14,6 +14,7 @@ import {
 } from "@/lib/api";
 import Modal from "@/components/Modal";
 import MarkdownViewer from "@/components/MarkdownViewer";
+import ChangelogCard from "@/components/ChangelogCard";
 import { useRouter } from "next/navigation";
 
 // Dashboard Statistics Card Component
@@ -30,31 +31,26 @@ function StatsCard({
   icon: React.ReactNode;
   color?: string;
 }) {
-  const colorClasses = {
-    primary: "bg-primary-50 text-primary-700",
-    green: "bg-green-50 text-green-700",
-    blue: "bg-blue-50 text-blue-700",
-    purple: "bg-purple-50 text-purple-700",
+  const gradientClasses = {
+    primary: "from-blue-500 to-blue-600",
+    green: "from-green-500 to-green-600",
+    blue: "from-sky-500 to-sky-600",
+    purple: "from-purple-500 to-purple-600",
   };
 
   return (
-    <div className="card">
-      <div className="flex items-center">
-        <div
-          className={`p-2 rounded-md ${
-            colorClasses[color as keyof typeof colorClasses] ||
-            colorClasses.primary
-          }`}
-        >
-          {icon}
+    <div
+      className={`rounded-xl p-6 shadow-lg text-white bg-gradient-to-br ${
+        gradientClasses[color as keyof typeof gradientClasses]
+      } transition-all duration-300 transform hover:scale-105 hover:shadow-2xl`}
+    >
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium opacity-80">{title}</p>
+          <p className="text-3xl font-bold">{value}</p>
+          {description && <p className="text-xs opacity-70">{description}</p>}
         </div>
-        <div className="ml-4">
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-semibold text-gray-900">{value}</p>
-          {description && (
-            <p className="text-sm text-gray-500">{description}</p>
-          )}
-        </div>
+        <div className="p-3 rounded-lg bg-white/20">{icon}</div>
       </div>
     </div>
   );
@@ -72,55 +68,51 @@ function SessionCard({
 }) {
   return (
     <div
-      className="card-interactive animate-slide-up"
+      className="bg-card rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 border-l-4 border-primary cursor-pointer p-6 animate-slide-up"
       style={{ animationDelay: `${index * 0.1}s` }}
       onClick={() => onNavigate(session.session_id)}
     >
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-2 h-2 rounded-full bg-primary"></div>
-            <h3 className="text-sm font-semibold text-foreground">
-              {session.name}
-            </h3>
-          </div>
-          <p className="text-xs text-muted-foreground mb-3">
+          <h3 className="text-md font-semibold text-foreground mb-1">
+            {session.name}
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
             {session.description}
           </p>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1.5">
               <DocumentIcon />
-              <span>{session.document_count} belge</span>
+              <span>{session.document_count}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-primary/10 flex items-center justify-center">
-                <div className="w-1 h-1 bg-primary rounded-full"></div>
-              </span>
-              <span>{session.total_chunks} parça</span>
+            <div className="flex items-center gap-1.5">
+              <ChartIcon />
+              <span>{session.total_chunks}</span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <QueryIcon />
-              <span>{session.query_count} sorgu</span>
+              <span>{session.query_count}</span>
             </div>
           </div>
         </div>
-        <div className="ml-4">
+        <div className="ml-4 flex flex-col items-end">
           <div
             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               session.status === "active"
-                ? "bg-green-500/10 text-green-700 border border-green-500/20"
-                : "bg-muted text-muted-foreground border border-border"
+                ? "bg-green-100 text-green-800"
+                : "bg-gray-100 text-gray-700"
             }`}
           >
             <div
-              className={`w-1.5 h-1.5 rounded-full mr-2 ${
-                session.status === "active"
-                  ? "bg-green-500 animate-pulse-soft"
-                  : "bg-muted-foreground"
+              className={`w-2 h-2 rounded-full mr-2 ${
+                session.status === "active" ? "bg-green-500" : "bg-gray-400"
               }`}
             ></div>
             {session.status === "active" ? "Aktif" : "Pasif"}
           </div>
+          <span className="text-xs text-muted-foreground mt-2">
+            {new Date(session.updated_at).toLocaleDateString("tr-TR")}
+          </span>
         </div>
       </div>
     </div>
@@ -624,43 +616,54 @@ export default function HomePage() {
             />
           </div>
 
-          {/* Recent Sessions */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-gray-900">
-                Son Oturumlar
-              </h2>
-              <button
-                onClick={refreshSessions}
-                className="btn btn-secondary"
-                disabled={loading}
-              >
-                {loading ? "Yenileniyor..." : "Yenile"}
-              </button>
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Recent Sessions */}
+              <div className="bg-card p-6 rounded-xl shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-foreground">
+                    Son Oturumlar
+                  </h2>
+                  <button
+                    onClick={refreshSessions}
+                    className="btn btn-secondary"
+                    disabled={loading}
+                  >
+                    {loading ? "Yenileniyor..." : "Yenile"}
+                  </button>
+                </div>
+
+                {sessions.length > 0 ? (
+                  <div className="space-y-4">
+                    {sessions.slice(0, 5).map((session, index) => (
+                      <SessionCard
+                        key={session.session_id}
+                        session={session}
+                        onNavigate={handleNavigateToSession}
+                        index={index}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                      <SessionIcon />
+                    </div>
+                    <p className="font-medium">Henüz oturum bulunmuyor</p>
+                    <p className="text-sm mt-1">
+                      "Oturumlar" sekmesinden yeni bir oturum oluşturun.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {sessions.length > 0 ? (
-              <div className="space-y-3">
-                {sessions.slice(0, 5).map((session, index) => (
-                  <SessionCard
-                    key={session.session_id}
-                    session={session}
-                    onNavigate={handleNavigateToSession}
-                    index={index}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                  <SessionIcon />
-                </div>
-                <p className="text-sm">Henüz oturum bulunmuyor</p>
-                <p className="text-xs mt-1 opacity-75">
-                  Yeni bir oturum oluşturun
-                </p>
-              </div>
-            )}
+            {/* Right Column */}
+            <div className="lg:col-span-1">
+              <ChangelogCard />
+            </div>
           </div>
         </div>
       )}
@@ -668,11 +671,11 @@ export default function HomePage() {
       {/* Sessions Tab */}
       {activeTab === "sessions" && (
         <div className="space-y-6">
-          <div className="card">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
+          <div className="bg-card p-8 rounded-xl shadow-lg">
+            <h2 className="text-xl font-bold text-foreground mb-6">
               Yeni Oturum Oluştur
             </h2>
-            <form onSubmit={handleCreateSession} className="space-y-4">
+            <form onSubmit={handleCreateSession} className="space-y-6">
               <div
                 className="animate-slide-up"
                 style={{ animationDelay: "0.1s" }}
@@ -685,7 +688,7 @@ export default function HomePage() {
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="input hover:shadow-md focus:shadow-lg transition-all duration-200"
+                  className="input"
                   required
                 />
               </div>
@@ -700,7 +703,7 @@ export default function HomePage() {
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="input hover:shadow-md focus:shadow-lg transition-all duration-200"
+                  className="input"
                   rows={3}
                 />
               </div>
@@ -715,7 +718,7 @@ export default function HomePage() {
                   id="category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="input hover:shadow-md focus:shadow-lg transition-all duration-200"
+                  className="input"
                 >
                   <option value="research">🔬 Araştırma</option>
                   <option value="education">📚 Eğitim</option>
@@ -723,12 +726,12 @@ export default function HomePage() {
                 </select>
               </div>
               <div
-                className="animate-slide-up"
+                className="animate-slide-up pt-2"
                 style={{ animationDelay: "0.4s" }}
               >
-                <button type="submit" className="btn btn-primary group">
+                <button type="submit" className="btn btn-primary group w-full">
                   <svg
-                    className="w-4 h-4 mr-2 group-hover:rotate-180 transition-transform duration-300"
+                    className="w-5 h-5 mr-2 group-hover:rotate-90 transition-transform duration-300"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -740,7 +743,7 @@ export default function HomePage() {
                       d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                     />
                   </svg>
-                  Oturum Oluştur
+                  <span>Oturum Oluştur</span>
                 </button>
               </div>
             </form>
@@ -781,38 +784,26 @@ export default function HomePage() {
       {activeTab === "upload" && (
         <div className="space-y-6">
           {/* PDF to Markdown Conversion Section */}
-          <div className="card">
+          <div className="bg-card p-8 rounded-xl shadow-lg">
             <div className="flex items-center mb-6">
-              <div className="p-2 bg-primary/10 text-primary rounded-md mr-3">
+              <div className="p-3 bg-primary/10 text-primary rounded-xl mr-4">
                 <UploadIcon />
               </div>
-              <h2 className="text-lg font-medium text-foreground">
-                PDF to Markdown Dönüştürücü
-              </h2>
+              <div>
+                <h2 className="text-xl font-bold text-foreground">
+                  PDF'den Markdown'a
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Akademik belgelerinizi RAG için hazırlayın
+                </p>
+              </div>
             </div>
 
-            {/* Success Display */}
             {success && (
-              <div className="alert alert-success mb-4">
-                <div className="flex items-center">
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {success}
-                </div>
-              </div>
+              <div className="alert alert-success mb-4">{success}</div>
             )}
 
             <form onSubmit={handlePdfUpload} className="space-y-6">
-              {/* Interactive Dropzone */}
               <div
                 className={`dropzone ${isDragOver ? "dropzone-active" : ""}`}
                 onDragOver={handleDragOver}
@@ -823,15 +814,11 @@ export default function HomePage() {
                 <div className="dropzone-icon">
                   <UploadIcon />
                 </div>
-                <div className="space-y-2">
-                  <p className="dropzone-text">
-                    <span className="dropzone-highlight">Tıklayın</span> veya
-                    dosyaları buraya sürükleyin
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Sadece PDF dosyaları desteklenmektedir (Max. 50MB)
-                  </p>
-                </div>
+                <p className="dropzone-text">
+                  <span className="dropzone-highlight">Tıklayın</span> veya PDF
+                  dosyanızı buraya sürükleyin
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Maks. 50MB</p>
                 <input
                   type="file"
                   id="pdf-file"
@@ -856,13 +843,7 @@ export default function HomePage() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => {
-                        setSelectedFile(null);
-                        const fileInput = document.getElementById(
-                          "pdf-file"
-                        ) as HTMLInputElement;
-                        if (fileInput) fileInput.value = "";
-                      }}
+                      onClick={() => setSelectedFile(null)}
                       className="text-muted-foreground hover:text-destructive transition-colors p-1"
                     >
                       <svg
@@ -889,15 +870,15 @@ export default function HomePage() {
                 disabled={!selectedFile || isConverting}
               >
                 {isConverting ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-foreground border-t-transparent mr-2"></div>
+                  <>
+                    <div className="spinner mr-2"></div>
                     Dönüştürülüyor...
-                  </div>
+                  </>
                 ) : (
-                  <div className="flex items-center justify-center">
+                  <>
                     <UploadIcon />
-                    <span className="ml-2">PDF'i Markdown'a Dönüştür</span>
-                  </div>
+                    <span className="ml-2">Dönüştür ve Yükle</span>
+                  </>
                 )}
               </button>
             </form>
