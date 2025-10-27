@@ -41,7 +41,7 @@ export default function LoginPage() {
             Öğretmen Paneli
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Yüksek Lisans Tezi Projesi
+            Yüksek Lisans Ödevi
           </p>
         </div>
         <form className="space-y-6" onSubmit={handleLogin}>

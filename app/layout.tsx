@@ -4,7 +4,7 @@ import ClientProvider from "@/components/ClientProvider";
 
 export const metadata: Metadata = {
   title: "Öğretmen Paneli | Akademik RAG",
-  description: "Burdur Mehmet Akif Ersoy Üniversitesi Yüksek Lisans Projesi",
+  description: "Burdur Mehmet Akif Ersoy Üniversitesi Yüksek Lisans Ödevi",
 };
 
 export default function RootLayout({

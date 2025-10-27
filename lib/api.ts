@@ -1,6 +1,6 @@
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://rag3-api-1051060211087.europe-west1.run.app";
+  "https://rageducation-backend-1051060211087.europe-west1.run.app";
 
 export type SessionMeta = {
   session_id: string;
