@@ -405,6 +405,100 @@
   @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
 }
 
+/* EMERGENCY BRUTAL MOBILE FIXES - FORCE HIDE DESKTOP ELEMENTS */
+@media (max-width: 767px) {
+  /* Nuclear approach - hide desktop menu with extreme prejudice */
+  .desktop-menu-component,
+  .desktop-menu-component *,
+  [data-is-desktop="true"],
+  [data-screen-width] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+    z-index: -1 !important;
+  }
+
+  /* Specific desktop elements that should NEVER show on mobile */
+  .items-center.space-x-6,
+  .desktop-only,
+  .hidden.md\\:flex,
+  .hidden.lg\\:flex,
+  .hidden.xl\\:flex {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  /* Force hide any API status indicators on mobile */
+  .text-green-600,
+  .text-red-600 {
+    display: none !important;
+  }
+
+  /* Force hide user info sections */
+  .flex.flex-col.items-end {
+    display: none !important;
+  }
+
+  /* Force hide logout buttons that might be desktop-only */
+  .w-10.h-10.rounded-full,
+  button[aria-label*="Çıkış"] {
+    display: none !important;
+  }
+
+  /* Nuclear option - hide anything that looks like desktop navigation */
+  header
+    .flex.items-center.justify-between
+    > div:last-child:not([class*="mobile"]) {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Additional layer of protection - hide by class patterns */
+  [class*="desktop"],
+  [class*="Desktop"],
+  [data-desktop="true"],
+  .lg\\:block,
+  .md\\:block,
+  .xl\\:block,
+  .hidden.sm\\:block,
+  .hidden.md\\:block,
+  .hidden.lg\\:block,
+  .hidden.xl\\:block {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+/* Failsafe - if anything with desktop in the class shows up, nuke it */
+@media screen and (max-width: 767px) {
+  [class*="desktop"],
+  [id*="desktop"],
+  [data-testid*="desktop"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -99999px !important;
+    top: -99999px !important;
+    z-index: -99999 !important;
+    pointer-events: none !important;
+  }
+}
+
 /* Dark mode support - optional */
 @media (prefers-color-scheme: dark) {
   .dark-mode {

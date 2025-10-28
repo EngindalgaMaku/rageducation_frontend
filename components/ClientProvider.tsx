@@ -5,6 +5,9 @@ import { useEffect, useState } from "react";
 import { checkApiHealth } from "@/lib/api";
 import Link from "next/link";
 import MobileMenu from "./MobileMenu";
+import DesktopMenu from "./DesktopMenu";
+import MobileMenuButton from "./MobileMenuButton";
+import FailsafeDesktopHider from "./FailsafeDesktopHider";
 
 export default function ClientProvider({
   children,
@@ -102,88 +105,10 @@ export default function ClientProvider({
                 </div>
               </div>
             </div>
-            <div className="hidden md:flex items-center space-x-6">
-              <div
-                className={`flex items-center space-x-2 text-sm ${
-                  apiStatus === "online" ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                <div
-                  className={`w-2.5 h-2.5 rounded-full ${
-                    apiStatus === "online"
-                      ? "bg-green-500 animate-pulse"
-                      : "bg-red-500"
-                  }`}
-                />
-                <span>
-                  {apiStatus === "online"
-                    ? "API Online"
-                    : apiStatus === "offline"
-                    ? "API Offline"
-                    : "Kontrol ediliyor..."}
-                </span>
-              </div>
-              <div className="flex flex-col items-end">
-                <span className="text-sm font-semibold text-foreground">
-                  Engin DALGA
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Danışman: Serkan BALLI
-                </span>
-              </div>
-              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center ring-2 ring-primary/20">
-                <svg
-                  className="w-6 h-6 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-              </div>
-              <button
-                onClick={handleLogout}
-                title="Çıkış Yap"
-                aria-label="Çıkış Yap"
-                className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="w-5 h-5"
-                >
-                  <path d="M10.75 3.5a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 .75.75v17a.75.75 0 0 1-.75.75h-6a.75.75 0 0 1-.75-.75v-3a.75.75 0 0 1 1.5 0v2.25h4.5V4.25h-4.5V6.5a.75.75 0 0 1-1.5 0v-3Z" />
-                  <path d="M3.22 12.53a.75.75 0 0 1 0-1.06l3-3a.75.75 0 1 1 1.06 1.06L5.81 11h7.44a.75.75 0 0 1 0 1.5H5.81l1.47 1.47a.75.75 0 1 1-1.06 1.06l-3-3Z" />
-                </svg>
-              </button>
-            </div>
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsMobileMenuOpen(true)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
-              >
-                <svg
-                  className="h-6 w-6"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M4 6h16M4 12h16m-7 6h7"
-                  />
-                </svg>
-              </button>
-            </div>
+            <FailsafeDesktopHider forceHideOnMobile={true}>
+              <DesktopMenu apiStatus={apiStatus} onLogout={handleLogout} />
+            </FailsafeDesktopHider>
+            <MobileMenuButton onClick={() => setIsMobileMenuOpen(true)} />
           </div>
         </div>
       </header>
