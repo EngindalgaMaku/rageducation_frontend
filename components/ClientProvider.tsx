@@ -5,9 +5,6 @@ import { useEffect, useState } from "react";
 import { checkApiHealth } from "@/lib/api";
 import Link from "next/link";
 import MobileMenu from "./MobileMenu";
-import DesktopMenu from "./DesktopMenu";
-import MobileMenuButton from "./MobileMenuButton";
-import FailsafeDesktopHider from "./FailsafeDesktopHider";
 
 export default function ClientProvider({
   children,
@@ -105,10 +102,61 @@ export default function ClientProvider({
                 </div>
               </div>
             </div>
-            <FailsafeDesktopHider forceHideOnMobile={true}>
-              <DesktopMenu apiStatus={apiStatus} onLogout={handleLogout} />
-            </FailsafeDesktopHider>
-            <MobileMenuButton onClick={() => setIsMobileMenuOpen(true)} />
+
+            {/* Desktop Menu - Simple Tailwind responsive */}
+            <nav className="hidden md:flex items-center space-x-6">
+              <div className="flex items-center space-x-2">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    apiStatus === "online"
+                      ? "bg-green-500"
+                      : apiStatus === "offline"
+                      ? "bg-red-500"
+                      : "bg-yellow-500"
+                  }`}
+                />
+                <span className="text-sm font-medium text-muted-foreground">
+                  {apiStatus === "online"
+                    ? "API Online"
+                    : apiStatus === "offline"
+                    ? "API Offline"
+                    : "Checking..."}
+                </span>
+              </div>
+              <Link
+                href="/"
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+              >
+                Ana Sayfa
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+              >
+                Çıkış Yap
+              </button>
+            </nav>
+
+            {/* Mobile Menu Button - Simple Tailwind responsive */}
+            <button
+              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <span className="sr-only">Ana menüyü aç</span>
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                />
+              </svg>
+            </button>
           </div>
         </div>
       </header>
