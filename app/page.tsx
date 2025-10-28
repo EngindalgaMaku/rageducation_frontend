@@ -68,10 +68,22 @@ function SessionCard({
 }) {
   const colorPalette = [
     { border: "border-blue-500", dot: "text-blue-600", strip: "bg-blue-500" },
-    { border: "border-emerald-500", dot: "text-emerald-600", strip: "bg-emerald-500" },
-    { border: "border-violet-500", dot: "text-violet-600", strip: "bg-violet-500" },
+    {
+      border: "border-emerald-500",
+      dot: "text-emerald-600",
+      strip: "bg-emerald-500",
+    },
+    {
+      border: "border-violet-500",
+      dot: "text-violet-600",
+      strip: "bg-violet-500",
+    },
     { border: "border-rose-500", dot: "text-rose-600", strip: "bg-rose-500" },
-    { border: "border-amber-500", dot: "text-amber-600", strip: "bg-amber-500" },
+    {
+      border: "border-amber-500",
+      dot: "text-amber-600",
+      strip: "bg-amber-500",
+    },
     { border: "border-cyan-500", dot: "text-cyan-600", strip: "bg-cyan-500" },
   ];
   const c = colorPalette[index % colorPalette.length];
@@ -82,7 +94,9 @@ function SessionCard({
       style={{ animationDelay: `${index * 0.1}s` }}
       onClick={() => onNavigate(session.session_id)}
     >
-      <div className={`absolute left-0 top-0 h-full w-1 ${c.strip} opacity-20 rounded-l-xl`} />
+      <div
+        className={`absolute left-0 top-0 h-full w-1 ${c.strip} opacity-20 rounded-l-xl`}
+      />
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <h3 className="text-md font-semibold text-foreground mb-1">
@@ -123,8 +137,18 @@ function SessionCard({
           </div>
           <div className="flex items-center text-sm text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-2">
             <span>Ayarları Görüntüle</span>
-            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            <svg
+              className="w-4 h-4 ml-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M17 8l4 4m0 0l-4 4m4-4H3"
+              />
             </svg>
           </div>
         </div>
@@ -250,7 +274,9 @@ export default function HomePage() {
   const [category, setCategory] = useState("research");
   const [file, setFile] = useState<File | null>(null);
   const [query, setQuery] = useState("");
-  const [chatHistory, setChatHistory] = useState<{ user: string; bot: string }[]>([]);
+  const [chatHistory, setChatHistory] = useState<
+    { user: string; bot: string }[]
+  >([]);
   const [isQuerying, setIsQuerying] = useState(false);
   const [uploadStats, setUploadStats] = useState<any>(null);
 
@@ -610,7 +636,7 @@ export default function HomePage() {
 
       {activeTab === "dashboard" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             <StatsCard
               title="Toplam Ders Oturumu"
               value={totalSessions}
@@ -1121,24 +1147,55 @@ export default function HomePage() {
       {activeTab === "query" && (
         <div className="bg-card rounded-xl shadow-lg flex flex-col h-[70vh]">
           <div className="p-4 border-b border-border">
-            <h2 className="text-lg font-bold text-foreground">
-              RAG Tabanlı Chatbot
-            </h2>
-            {!selectedSessionId ? (
-              <p className="text-xs text-yellow-600">
-                Sohbeti başlatmak için bir ders oturumu seçin.
-              </p>
-            ) : (
-              <p className="text-xs text-green-600">
-                Seçili ders oturumu:{" "}
-                <strong>
-                  {
-                    sessions.find((s) => s.session_id === selectedSessionId)
-                      ?.name
-                  }
-                </strong>
-              </p>
-            )}
+            <div className="flex flex-col space-y-3 md:flex-row md:justify-between md:items-center md:space-y-0">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">
+                  RAG Tabanlı Chatbot
+                </h2>
+                {!selectedSessionId ? (
+                  <p className="text-xs text-yellow-600">
+                    Sohbeti başlatmak için bir ders oturumu seçin.
+                  </p>
+                ) : (
+                  <p className="text-xs text-green-600">
+                    Seçili ders oturumu:{" "}
+                    <strong>
+                      {
+                        sessions.find((s) => s.session_id === selectedSessionId)
+                          ?.name
+                      }
+                    </strong>
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="model-select"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  LLM Modeli:
+                </label>
+                <select
+                  id="model-select"
+                  value={selectedQueryModel}
+                  onChange={(e) => setSelectedQueryModel(e.target.value)}
+                  className="input text-sm py-1 px-2 w-40 md:w-48"
+                  disabled={modelsLoading || availableModels.length === 0}
+                >
+                  {modelsLoading ? (
+                    <option>Yükleniyor...</option>
+                  ) : availableModels.length === 0 ? (
+                    <option>Model bulunamadı</option>
+                  ) : (
+                    availableModels.map((model) => (
+                      <option key={model} value={model}>
+                        {model}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+            </div>
           </div>
 
           {/* Chat History */}

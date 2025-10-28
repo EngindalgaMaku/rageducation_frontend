@@ -73,7 +73,7 @@ export default function MobileMenu({
               onLogout();
               onClose();
             }}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors px-3 py-3"
+            className="w-full inline-flex items-center justify-center space-x-2 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors px-3 py-3"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -84,7 +84,7 @@ export default function MobileMenu({
               <path d="M10.75 3.5a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 .75.75v17a.75.75 0 0 1-.75.75h-6a.75.75 0 0 1-.75-.75v-3a.75.75 0 0 1 1.5 0v2.25h4.5V4.25h-4.5V6.5a.75.75 0 0 1-1.5 0v-3Z" />
               <path d="M3.22 12.53a.75.75 0 0 1 0-1.06l3-3a.75.75 0 1 1 1.06 1.06L5.81 11h7.44a.75.75 0 0 1 0 1.5H5.81l1.47 1.47a.75.75 0 1 1-1.06 1.06l-3-3Z" />
             </svg>
-            <span>Çıkış Yap</span>
+            <span className="font-medium">Çıkış Yap</span>
           </button>
         </div>
       </div>

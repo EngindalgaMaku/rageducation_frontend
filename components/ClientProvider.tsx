@@ -19,18 +19,23 @@ export default function ClientProvider({
     "loading"
   );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Auth check
+  // Auth check and client-side mount detection
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem("isAuthenticated");
-    if (!isAuthenticated && !isLoginPage) {
+    setIsClient(true);
+    const authStatus = localStorage.getItem("isAuthenticated") === "true";
+    setIsAuthenticated(authStatus);
+
+    if (!authStatus && !isLoginPage) {
       router.replace("/login");
     }
   }, [router, pathname, isLoginPage]);
 
   // API Health check
   useEffect(() => {
-    if (isLoginPage) return;
+    if (isLoginPage || !isClient) return;
 
     const checkStatus = async () => {
       try {
@@ -45,25 +50,22 @@ export default function ClientProvider({
     const interval = setInterval(checkStatus, 30000);
 
     return () => clearInterval(interval);
-  }, [isLoginPage]);
+  }, [isLoginPage, isClient]);
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
+    setIsAuthenticated(false);
     router.push("/login");
   };
 
-  if (!isLoginPage) {
-    const isAuthenticated =
-      typeof window !== "undefined"
-        ? localStorage.getItem("isAuthenticated")
-        : null;
-    if (!isAuthenticated) {
-      return null; // veya bir yükleme ekranı
-    }
-  }
-
   if (isLoginPage) {
     return <>{children}</>;
+  }
+
+  // On server, or before client-side check, or if not authenticated, render nothing.
+  // This prevents the hydration mismatch.
+  if (!isClient || !isAuthenticated) {
+    return null;
   }
 
   return (
@@ -148,7 +150,7 @@ export default function ClientProvider({
                 onClick={handleLogout}
                 title="Çıkış Yap"
                 aria-label="Çıkış Yap"
-                className="inline-flex items-center justify-center gap-2 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors px-3 py-2"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -159,7 +161,6 @@ export default function ClientProvider({
                   <path d="M10.75 3.5a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 .75.75v17a.75.75 0 0 1-.75.75h-6a.75.75 0 0 1-.75-.75v-3a.75.75 0 0 1 1.5 0v2.25h4.5V4.25h-4.5V6.5a.75.75 0 0 1-1.5 0v-3Z" />
                   <path d="M3.22 12.53a.75.75 0 0 1 0-1.06l3-3a.75.75 0 1 1 1.06 1.06L5.81 11h7.44a.75.75 0 0 1 0 1.5H5.81l1.47 1.47a.75.75 0 1 1-1.06 1.06l-3-3Z" />
                 </svg>
-                <span className="hidden sm:inline">Çıkış Yap</span>
               </button>
             </div>
             <div className="md:hidden">
@@ -202,12 +203,7 @@ export default function ClientProvider({
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} Engin DALGA - MAKÜ Yüksek Lisans
-              Çalışması
-            </div>
-            <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-              <span className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                v2.2.0
-              </span>
+              Ödevi
             </div>
           </div>
         </div>

@@ -92,26 +92,26 @@ const PlayIcon = () => (
 function ChunkCard({ chunk, index }: { chunk: Chunk; index: number }) {
   return (
     <div
-      className="bg-card border border-border rounded-xl p-4 animate-slide-up transition-all duration-300 hover:border-primary/50 hover:shadow-lg"
+      className="bg-card border border-border rounded-xl p-4 md:p-5 animate-slide-up transition-all duration-300 hover:border-primary/50 hover:shadow-lg touch-manipulation"
       style={{ animationDelay: `${index * 0.05}s` }}
     >
-      <div className="flex items-start gap-4">
-        <div className="flex-shrink-0 w-10 h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center font-bold text-lg">
+      <div className="flex items-start gap-3 md:gap-4">
+        <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 bg-primary/10 text-primary rounded-lg flex items-center justify-center font-bold text-base md:text-lg">
           {chunk.chunk_index}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground truncate">
+          <p className="text-sm md:text-base font-semibold text-foreground mb-1 leading-tight">
             {chunk.document_name}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs md:text-sm text-muted-foreground mb-3">
             {chunk.chunk_text.length} karakter
           </p>
-          <details className="mt-2 group">
-            <summary className="text-xs text-primary cursor-pointer group-hover:underline">
+          <details className="group">
+            <summary className="text-sm md:text-base text-primary cursor-pointer group-hover:underline focus:outline-none focus:ring-2 focus:ring-primary/20 rounded py-1 px-2 -mx-2 transition-colors">
               İçeriği Görüntüle
             </summary>
-            <div className="mt-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3 max-h-48 overflow-y-auto">
-              <p className="whitespace-pre-wrap font-sans text-xs leading-relaxed">
+            <div className="mt-3 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3 md:p-4 max-h-48 md:max-h-64 overflow-y-auto">
+              <p className="whitespace-pre-wrap font-sans text-xs md:text-sm leading-relaxed">
                 {chunk.chunk_text}
               </p>
             </div>
@@ -264,31 +264,34 @@ export default function SessionPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6">
+        <div className="flex-1 min-w-0">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-2"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-3 md:mb-2 transition-colors"
           >
             <BackIcon />
-            Tüm Oturumlara Geri Dön
+            <span className="truncate">Tüm Oturumlara Geri Dön</span>
           </Link>
-          <h1 className="text-3xl font-bold text-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
             {session?.name || "Ders Oturumu Yükleniyor..."}
           </h1>
-          <p className="text-muted-foreground text-md mt-1">
+          <p className="text-muted-foreground text-sm md:text-base mt-1 leading-relaxed">
             {session?.description || ""}
           </p>
         </div>
-        <div className="flex-shrink-0 text-right text-sm text-muted-foreground bg-card border border-border rounded-lg p-3">
-          <div className="font-mono">
+        <div className="w-full md:w-auto flex-shrink-0 text-left md:text-right text-sm text-muted-foreground bg-card border border-border rounded-lg p-3 md:p-4">
+          <div className="font-mono text-xs md:text-sm truncate">
             Ders Oturumu ID: {sessionId.substring(0, 12)}...
           </div>
           {session && (
-            <div className="mt-1 font-medium">
-              {session.document_count} belge • {session.total_chunks} parça
+            <div className="mt-2 md:mt-1 font-medium text-sm">
+              <span className="inline-block mr-2">
+                {session.document_count} belge
+              </span>
+              <span className="inline-block">{session.total_chunks} parça</span>
             </div>
           )}
         </div>
@@ -308,16 +311,16 @@ export default function SessionPage() {
       )}
 
       {/* RAG Configuration Section */}
-      <div className="bg-card p-8 rounded-xl shadow-lg">
-        <div className="flex items-center mb-6">
-          <div className="p-3 bg-primary/10 text-primary rounded-xl mr-4">
+      <div className="bg-card p-4 md:p-6 lg:p-8 rounded-xl shadow-lg">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center mb-6 gap-3">
+          <div className="p-3 bg-primary/10 text-primary rounded-xl flex-shrink-0">
             <ConfigIcon />
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg md:text-xl font-bold text-foreground">
               RAG Konfigürasyonu
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Belgeleri parçalara ayırın ve vektör veritabanını oluşturun
             </p>
           </div>
@@ -326,29 +329,31 @@ export default function SessionPage() {
         <form onSubmit={handleConfigureAndProcess} className="space-y-6">
           {/* Markdown Files Selection */}
           <div>
-            <label className="label">Markdown Dosyaları Seçin</label>
-            <div className="max-h-48 overflow-y-auto border border-border rounded-md">
+            <label className="block text-sm font-medium text-foreground mb-3">
+              Markdown Dosyaları Seçin
+            </label>
+            <div className="max-h-48 md:max-h-56 overflow-y-auto border border-border rounded-lg bg-background">
               {markdownFiles.length === 0 ? (
-                <div className="text-center py-4 text-muted-foreground">
-                  Markdown dosyası bulunamadı
+                <div className="text-center py-8 text-muted-foreground">
+                  <div className="text-sm">Markdown dosyası bulunamadı</div>
                 </div>
               ) : (
                 markdownFiles.map((filename) => (
                   <div
                     key={filename}
-                    className="flex items-center p-3 hover:bg-muted/50 border-b border-border last:border-b-0"
+                    className="flex items-start p-4 hover:bg-muted/50 border-b border-border last:border-b-0 transition-colors"
                   >
                     <input
                       type="checkbox"
                       checked={selectedFiles.includes(filename)}
                       onChange={() => handleFileToggle(filename)}
-                      className="mr-3 h-4 w-4 text-primary rounded border-border focus:ring-primary"
+                      className="mt-0.5 mr-4 h-5 w-5 text-primary rounded border-border focus:ring-primary focus:ring-2 flex-shrink-0"
                     />
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-foreground">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-foreground truncate">
                         {filename.replace(".md", "")}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground mt-1 truncate">
                         {filename}
                       </div>
                     </div>
@@ -357,23 +362,28 @@ export default function SessionPage() {
               )}
             </div>
             {selectedFiles.length > 0 && (
-              <div className="mt-2 text-sm text-muted-foreground">
-                {selectedFiles.length} dosya seçili
+              <div className="mt-3 px-3 py-2 bg-primary/10 rounded-lg">
+                <div className="text-sm text-primary font-medium">
+                  {selectedFiles.length} dosya seçili
+                </div>
               </div>
             )}
           </div>
 
           {/* Configuration Parameters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="chunk_strategy" className="label">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            <div className="space-y-2">
+              <label
+                htmlFor="chunk_strategy"
+                className="block text-sm font-medium text-foreground"
+              >
                 Parçalama Stratejisi
               </label>
               <select
                 id="chunk_strategy"
                 value={chunkStrategy}
                 onChange={(e) => setChunkStrategy(e.target.value)}
-                className="input"
+                className="w-full px-4 py-3 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               >
                 {chunkStrategies.map((strategy) => (
                   <option key={strategy.value} value={strategy.value}>
@@ -383,15 +393,18 @@ export default function SessionPage() {
               </select>
             </div>
 
-            <div>
-              <label htmlFor="embedding_model" className="label">
+            <div className="space-y-2">
+              <label
+                htmlFor="embedding_model"
+                className="block text-sm font-medium text-foreground"
+              >
                 Embedding Modeli
               </label>
               <select
                 id="embedding_model"
                 value={embeddingModel}
                 onChange={(e) => setEmbeddingModel(e.target.value)}
-                className="input"
+                className="w-full px-4 py-3 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               >
                 {embeddingModels.map((model) => (
                   <option key={model.value} value={model.value}>
@@ -401,8 +414,11 @@ export default function SessionPage() {
               </select>
             </div>
 
-            <div>
-              <label htmlFor="chunk_size" className="label">
+            <div className="space-y-2">
+              <label
+                htmlFor="chunk_size"
+                className="block text-sm font-medium text-foreground"
+              >
                 Parça Boyutu
               </label>
               <input
@@ -413,12 +429,15 @@ export default function SessionPage() {
                 min="100"
                 max="4000"
                 step="100"
-                className="input"
+                className="w-full px-4 py-3 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div>
-              <label htmlFor="chunk_overlap" className="label">
+            <div className="space-y-2">
+              <label
+                htmlFor="chunk_overlap"
+                className="block text-sm font-medium text-foreground"
+              >
                 Parça Çakışması
               </label>
               <input
@@ -429,7 +448,7 @@ export default function SessionPage() {
                 min="0"
                 max="1000"
                 step="50"
-                className="input"
+                className="w-full px-4 py-3 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
@@ -438,17 +457,17 @@ export default function SessionPage() {
           <button
             type="submit"
             disabled={selectedFiles.length === 0 || processing}
-            className="btn btn-primary w-full flex items-center justify-center gap-2"
+            className="w-full py-4 px-6 bg-primary text-primary-foreground rounded-lg font-medium text-sm flex items-center justify-center gap-3 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[3rem] touch-manipulation"
           >
             {processing ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-foreground border-t-transparent"></div>
-                İşleniyor...
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground border-t-transparent"></div>
+                <span>İşleniyor...</span>
               </>
             ) : (
               <>
                 <PlayIcon />
-                RAG Konfigürasyonunu Çalıştır
+                <span>RAG Konfigürasyonunu Çalıştır</span>
               </>
             )}
           </button>
@@ -456,17 +475,17 @@ export default function SessionPage() {
       </div>
 
       {/* Chunks Visualization Section */}
-      <div className="bg-card p-8 rounded-xl shadow-lg">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <div className="p-3 bg-primary/10 text-primary rounded-xl mr-4">
+      <div className="bg-card p-4 md:p-6 lg:p-8 rounded-xl shadow-lg">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+          <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+            <div className="p-3 bg-primary/10 text-primary rounded-xl flex-shrink-0">
               <ChunkIcon />
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-foreground">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg md:text-xl font-bold text-foreground leading-tight">
                 Ders Oturumu Parçaları ({chunks.length})
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
                 Vektör veritabanında oluşturulan tüm metin parçaları
               </p>
             </div>
@@ -474,35 +493,37 @@ export default function SessionPage() {
           <button
             onClick={fetchChunks}
             disabled={loading}
-            className="btn btn-secondary"
+            className="w-full sm:w-auto py-2 px-4 text-sm bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all touch-manipulation"
           >
             {loading ? "Yenileniyor..." : "Yenile"}
           </button>
         </div>
 
         {loading ? (
-          <div className="text-center py-12">
-            <div className="relative mx-auto w-16 h-16 mb-4">
+          <div className="text-center py-12 md:py-16">
+            <div className="relative mx-auto w-12 h-12 md:w-16 md:h-16 mb-4">
               <div className="absolute inset-0 rounded-full border-4 border-muted"></div>
               <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
             </div>
-            <p className="text-muted-foreground">Parçalar yükleniyor...</p>
+            <p className="text-muted-foreground text-sm md:text-base">
+              Parçalar yükleniyor...
+            </p>
           </div>
         ) : chunks.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+          <div className="text-center py-12 md:py-16">
+            <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
               <ChunkIcon />
             </div>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm md:text-base mb-2">
               Bu ders oturumu için henüz parça bulunmuyor
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs md:text-sm text-muted-foreground">
               Yukarıdan RAG konfigürasyonu çalıştırın
             </p>
           </div>
         ) : (
           <>
-            <div className="space-y-4">
+            <div className="space-y-4 md:space-y-6">
               {chunks
                 .slice(
                   (chunkPage - 1) * CHUNKS_PER_PAGE,
@@ -518,15 +539,15 @@ export default function SessionPage() {
             </div>
             {/* Pagination for Chunks */}
             {chunks.length > CHUNKS_PER_PAGE && (
-              <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+              <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-6 border-t border-border gap-4">
                 <button
                   onClick={() => setChunkPage((p) => Math.max(1, p - 1))}
                   disabled={chunkPage === 1}
-                  className="btn btn-secondary"
+                  className="w-full sm:w-auto py-2 px-6 text-sm bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all touch-manipulation"
                 >
                   Önceki
                 </button>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-muted-foreground font-medium px-4 py-2 bg-muted/30 rounded-lg">
                   Sayfa {chunkPage} /{" "}
                   {Math.ceil(chunks.length / CHUNKS_PER_PAGE)}
                 </span>
@@ -542,7 +563,7 @@ export default function SessionPage() {
                   disabled={
                     chunkPage >= Math.ceil(chunks.length / CHUNKS_PER_PAGE)
                   }
-                  className="btn btn-secondary"
+                  className="w-full sm:w-auto py-2 px-6 text-sm bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all touch-manipulation"
                 >
                   Sonraki
                 </button>
