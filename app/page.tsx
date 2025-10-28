@@ -501,7 +501,7 @@ export default function HomePage() {
 
       if (result.success) {
         setSuccess(
-          `PDF başarıyla Markdown formatına dönüştürüldü: ${result.markdown_filename}`
+          `Belge başarıyla Markdown formatına dönüştürüldü: ${result.markdown_filename}`
         );
         setSelectedFile(null);
         const fileInput = document.getElementById(
@@ -516,7 +516,7 @@ export default function HomePage() {
         setError(result.message || "Dönüştürme işlemi başarısız");
       }
     } catch (e: any) {
-      setError(e.message || "PDF dönüştürme işlemi başarısız");
+      setError(e.message || "Belge dönüştürme işlemi başarısız");
     } finally {
       setIsConverting(false);
     }
@@ -538,11 +538,18 @@ export default function HomePage() {
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      if (file && file.type === "application/pdf") {
+      const supportedTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation", // PPTX
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // XLSX
+      ];
+
+      if (file && supportedTypes.includes(file.type)) {
         setSelectedFile(file);
         setError(null);
       } else {
-        setError("Lütfen sadece PDF dosyası seçin");
+        setError("Lütfen sadece PDF, DOCX, PPTX veya XLSX dosyası seçin");
       }
     }
   };
@@ -550,11 +557,18 @@ export default function HomePage() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (file) {
-      if (file.type === "application/pdf") {
+      const supportedTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation", // PPTX
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // XLSX
+      ];
+
+      if (supportedTypes.includes(file.type)) {
         setSelectedFile(file);
         setError(null);
       } else {
-        setError("Lütfen sadece PDF dosyası seçin");
+        setError("Lütfen sadece PDF, DOCX, PPTX veya XLSX dosyası seçin");
       }
     }
   };
@@ -838,10 +852,10 @@ export default function HomePage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-foreground">
-                  PDF'den Markdown'a
+                  Belge'den Markdown'a
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Akademik belgelerinizi RAG için hazırlayın
+                  PDF, DOCX, PPTX, XLSX belgelerinizi RAG için hazırlayın
                 </p>
               </div>
             </div>
@@ -862,16 +876,18 @@ export default function HomePage() {
                   <UploadIcon />
                 </div>
                 <p className="dropzone-text">
-                  <span className="dropzone-highlight">Tıklayın</span> veya PDF
-                  dosyanızı buraya sürükleyin
+                  <span className="dropzone-highlight">Tıklayın</span> veya
+                  belgenizi buraya sürükleyin
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">Maks. 50MB</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  PDF, DOCX, PPTX, XLSX • Maks. 50MB
+                </p>
                 <input
                   type="file"
                   id="pdf-file"
                   onChange={handleFileSelect}
                   className="hidden"
-                  accept=".pdf"
+                  accept=".pdf,.docx,.pptx,.xlsx"
                   disabled={isConverting}
                 />
               </div>
