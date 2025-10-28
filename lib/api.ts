@@ -183,10 +183,16 @@ export async function configureAndProcess(data: {
 
 export async function checkApiHealth(): Promise<{ status: string }> {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     const res = await fetch(`${API_URL}/health`, {
       cache: "no-store",
-      signal: AbortSignal.timeout(5000), // 5-saniyelik zaman aşımı
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
+
     if (!res.ok) {
       throw new Error(`API ${res.status} durum kodu döndürdü`);
     }
