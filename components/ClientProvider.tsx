@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { checkApiHealth } from "@/lib/api";
 import Link from "next/link";
+import MobileMenu from "./MobileMenu";
 
 export default function ClientProvider({
   children,
@@ -17,6 +18,7 @@ export default function ClientProvider({
   const [apiStatus, setApiStatus] = useState<"online" | "offline" | "loading">(
     "loading"
   );
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Auth check
   useEffect(() => {
@@ -92,15 +94,15 @@ export default function ClientProvider({
                       Öğretmen Paneli
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                      Yüksek Lisans Tezi Projesi
+                      Yüksek Lisans Ödevi
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="flex items-center space-x-6">
+            <div className="hidden md:flex items-center space-x-6">
               <div
-                className={`hidden md:flex items-center space-x-2 text-sm ${
+                className={`flex items-center space-x-2 text-sm ${
                   apiStatus === "online" ? "text-green-600" : "text-red-600"
                 }`}
               >
@@ -119,7 +121,7 @@ export default function ClientProvider({
                     : "Kontrol ediliyor..."}
                 </span>
               </div>
-              <div className="hidden md:flex flex-col items-end">
+              <div className="flex flex-col items-end">
                 <span className="text-sm font-semibold text-foreground">
                   Engin DALGA
                 </span>
@@ -144,14 +146,54 @@ export default function ClientProvider({
               </div>
               <button
                 onClick={handleLogout}
-                className="text-sm font-medium text-muted-foreground hover:text-destructive"
+                title="Çıkış Yap"
+                aria-label="Çıkış Yap"
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors px-3 py-2"
               >
-                Çıkış Yap
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path d="M10.75 3.5a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 .75.75v17a.75.75 0 0 1-.75.75h-6a.75.75 0 0 1-.75-.75v-3a.75.75 0 0 1 1.5 0v2.25h4.5V4.25h-4.5V6.5a.75.75 0 0 1-1.5 0v-3Z" />
+                  <path d="M3.22 12.53a.75.75 0 0 1 0-1.06l3-3a.75.75 0 1 1 1.06 1.06L5.81 11h7.44a.75.75 0 0 1 0 1.5H5.81l1.47 1.47a.75.75 0 1 1-1.06 1.06l-3-3Z" />
+                </svg>
+                <span className="hidden sm:inline">Çıkış Yap</span>
+              </button>
+            </div>
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+              >
+                <svg
+                  className="h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M4 6h16M4 12h16m-7 6h7"
+                  />
+                </svg>
               </button>
             </div>
           </div>
         </div>
       </header>
+
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        onLogout={handleLogout}
+        apiStatus={apiStatus}
+      />
+
       <main className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 min-h-[calc(100vh-8rem)] animate-fade-in">
         <div className="max-w-full">{children}</div>
       </main>

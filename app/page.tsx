@@ -66,12 +66,23 @@ function SessionCard({
   onNavigate: (id: string) => void;
   index?: number;
 }) {
+  const colorPalette = [
+    { border: "border-blue-500", dot: "text-blue-600", strip: "bg-blue-500" },
+    { border: "border-emerald-500", dot: "text-emerald-600", strip: "bg-emerald-500" },
+    { border: "border-violet-500", dot: "text-violet-600", strip: "bg-violet-500" },
+    { border: "border-rose-500", dot: "text-rose-600", strip: "bg-rose-500" },
+    { border: "border-amber-500", dot: "text-amber-600", strip: "bg-amber-500" },
+    { border: "border-cyan-500", dot: "text-cyan-600", strip: "bg-cyan-500" },
+  ];
+  const c = colorPalette[index % colorPalette.length];
+
   return (
     <div
-      className="group bg-card rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 border-l-4 border-primary cursor-pointer p-6 animate-slide-up"
+      className={`relative group bg-card rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border-l-4 ${c.border} cursor-pointer p-6 animate-slide-up`}
       style={{ animationDelay: `${index * 0.1}s` }}
       onClick={() => onNavigate(session.session_id)}
     >
+      <div className={`absolute left-0 top-0 h-full w-1 ${c.strip} opacity-20 rounded-l-xl`} />
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <h3 className="text-md font-semibold text-foreground mb-1">
