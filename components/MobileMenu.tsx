@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { BackendType } from "@/contexts/BackendContext";
 
 interface MobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
   onLogout: () => void;
   apiStatus: "online" | "offline" | "loading";
+  backendType: BackendType;
 }
 
 export default function MobileMenu({
@@ -14,6 +16,7 @@ export default function MobileMenu({
   onClose,
   onLogout,
   apiStatus,
+  backendType,
 }: MobileMenuProps) {
   if (!isOpen) return null;
 
@@ -48,23 +51,26 @@ export default function MobileMenu({
           </div>
 
           <div
-            className={`flex items-center space-x-2 text-sm p-4 rounded-lg ${
+            className={`flex items-center justify-between text-sm p-4 rounded-lg ${
               apiStatus === "online"
                 ? "bg-green-500/10 text-green-600"
                 : "bg-red-500/10 text-red-600"
             }`}
           >
-            <div
-              className={`w-2.5 h-2.5 rounded-full ${
-                apiStatus === "online" ? "bg-green-500" : "bg-red-500"
-              }`}
-            />
-            <span>
+            <div className="flex items-center space-x-2">
+              <div
+                className={`w-2.5 h-2.5 rounded-full ${
+                  apiStatus === "online" ? "bg-green-500" : "bg-red-500"
+                }`}
+              />
+              <span>{backendType === "local" ? "Local" : "Cloud"} Backend</span>
+            </div>
+            <span className="font-medium">
               {apiStatus === "online"
-                ? "API Online"
+                ? "Online"
                 : apiStatus === "offline"
-                ? "API Offline"
-                : "Kontrol ediliyor..."}
+                ? "Offline"
+                : "Checking..."}
             </span>
           </div>
 

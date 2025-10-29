@@ -2,18 +2,17 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { checkApiHealth } from "@/lib/api";
+import { checkApiHealth, setGlobalApiUrl } from "@/lib/api";
 import Link from "next/link";
 import MobileMenu from "./MobileMenu";
+import { BackendProvider, useBackend } from "@/contexts/BackendContext";
 
-export default function ClientProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+// Inner component that uses BackendContext
+function ClientProviderInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isLoginPage = pathname === "/login";
+  const { apiUrl, backendType } = useBackend();
 
   const [apiStatus, setApiStatus] = useState<"online" | "offline" | "loading">(
     "loading"
@@ -21,6 +20,11 @@ export default function ClientProvider({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Update global API URL when backend type changes
+  useEffect(() => {
+    setGlobalApiUrl(apiUrl);
+  }, [apiUrl]);
 
   // Auth check and client-side mount detection
   useEffect(() => {
@@ -50,7 +54,7 @@ export default function ClientProvider({
     const interval = setInterval(checkStatus, 30000);
 
     return () => clearInterval(interval);
-  }, [isLoginPage, isClient]);
+  }, [isLoginPage, isClient, apiUrl]); // Include apiUrl in dependency
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
@@ -106,29 +110,28 @@ export default function ClientProvider({
             {/* Desktop Menu - Simple Tailwind responsive */}
             <nav className="hidden md:flex items-center space-x-6">
               <div className="flex items-center space-x-2">
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    apiStatus === "online"
-                      ? "bg-green-500"
+                <div className="flex items-center space-x-2 text-xs">
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      apiStatus === "online"
+                        ? "bg-green-500"
+                        : apiStatus === "offline"
+                        ? "bg-red-500"
+                        : "bg-yellow-500"
+                    }`}
+                  />
+                  <span className="text-muted-foreground">
+                    {backendType === "local" ? "Local" : "Cloud"} Backend
+                  </span>
+                  <span className="font-medium">
+                    {apiStatus === "online"
+                      ? "Online"
                       : apiStatus === "offline"
-                      ? "bg-red-500"
-                      : "bg-yellow-500"
-                  }`}
-                />
-                <span className="text-sm font-medium text-muted-foreground">
-                  {apiStatus === "online"
-                    ? "API Online"
-                    : apiStatus === "offline"
-                    ? "API Offline"
-                    : "Checking..."}
-                </span>
+                      ? "Offline"
+                      : "Checking..."}
+                  </span>
+                </div>
               </div>
-              <Link
-                href="/"
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-              >
-                Ana Sayfa
-              </Link>
               <button
                 onClick={handleLogout}
                 className="text-sm font-medium text-foreground hover:text-primary transition-colors"
@@ -166,6 +169,7 @@ export default function ClientProvider({
         onClose={() => setIsMobileMenuOpen(false)}
         onLogout={handleLogout}
         apiStatus={apiStatus}
+        backendType={backendType}
       />
 
       <main className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 min-h-[calc(100vh-8rem)] animate-fade-in">
@@ -182,5 +186,18 @@ export default function ClientProvider({
         </div>
       </footer>
     </div>
+  );
+}
+
+// Main component that provides BackendContext
+export default function ClientProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <BackendProvider>
+      <ClientProviderInner>{children}</ClientProviderInner>
+    </BackendProvider>
   );
 }

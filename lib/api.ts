@@ -1,6 +1,24 @@
-const API_URL =
+// API URL will be dynamically determined by BackendContext
+// This is a fallback for server-side rendering
+const DEFAULT_API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://rageducation-backend-1051060211087.europe-west1.run.app";
+  "https://api-gateway-1051060211087.europe-west1.run.app";
+
+// Set API URL globally for client-side access
+export function setGlobalApiUrl(url: string) {
+  if (typeof window !== "undefined") {
+    (window as any).__BACKEND_API_URL__ = url;
+  }
+}
+
+// Get API URL from context or use default
+function getApiUrl(): string {
+  if (typeof window !== "undefined") {
+    // Client-side: try to get from global state
+    return (window as any).__BACKEND_API_URL__ || DEFAULT_API_URL;
+  }
+  return DEFAULT_API_URL;
+}
 
 export type SessionMeta = {
   session_id: string;
@@ -38,7 +56,7 @@ export type SessionChunksResponse = {
 };
 
 export async function listSessions(): Promise<SessionMeta[]> {
-  const res = await fetch(`${API_URL}/sessions`, { cache: "no-store" });
+  const res = await fetch(`${getApiUrl()}/sessions`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch sessions");
   return res.json();
 }
@@ -54,7 +72,7 @@ export async function createSession(data: {
   tags?: string[];
   is_public?: boolean;
 }): Promise<SessionMeta> {
-  const res = await fetch(`${API_URL}/sessions`, {
+  const res = await fetch(`${getApiUrl()}/sessions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -64,7 +82,7 @@ export async function createSession(data: {
 }
 
 export async function uploadDocument(form: FormData): Promise<any> {
-  const res = await fetch(`${API_URL}/documents/upload`, {
+  const res = await fetch(`${getApiUrl()}/documents/upload`, {
     method: "POST",
     body: form,
   });
@@ -81,7 +99,7 @@ export async function ragQuery(data: {
   max_context_chars?: number;
   model?: string;
 }): Promise<{ answer: string; sources: string[] }> {
-  const res = await fetch(`${API_URL}/rag/query`, {
+  const res = await fetch(`${getApiUrl()}/rag/query`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -94,16 +112,19 @@ export async function convertPdfToMarkdown(file: File): Promise<any> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(`${API_URL}/documents/convert-document-to-markdown`, {
-    method: "POST",
-    body: formData,
-  });
+  const res = await fetch(
+    `${getApiUrl()}/documents/convert-document-to-markdown`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function listMarkdownFiles(): Promise<string[]> {
-  const res = await fetch(`${API_URL}/documents/list-markdown`, {
+  const res = await fetch(`${getApiUrl()}/documents/list-markdown`, {
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch markdown files");
@@ -121,7 +142,7 @@ export async function addMarkdownDocumentsToSession(
   message: string;
   errors?: string[];
 }> {
-  const res = await fetch(`${API_URL}/sessions/add-markdown-documents`, {
+  const res = await fetch(`${getApiUrl()}/sessions/add-markdown-documents`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -135,7 +156,7 @@ export async function addMarkdownDocumentsToSession(
 
 export async function getChunksForSession(sessionId: string): Promise<Chunk[]> {
   const res = await fetch(
-    `${API_URL}/rag/chunks/${encodeURIComponent(sessionId)}`,
+    `${getApiUrl()}/rag/chunks/${encodeURIComponent(sessionId)}`,
     {
       cache: "no-store",
     }
@@ -149,7 +170,7 @@ export async function getMarkdownFileContent(
   filename: string
 ): Promise<{ content: string }> {
   const res = await fetch(
-    `${API_URL}/documents/markdown/${encodeURIComponent(filename)}`,
+    `${getApiUrl()}/documents/markdown/${encodeURIComponent(filename)}`,
     {
       cache: "no-store",
     }
@@ -172,7 +193,7 @@ export async function configureAndProcess(data: {
   total_chunks: number;
   processing_time?: number;
 }> {
-  const res = await fetch(`${API_URL}/rag/configure-and-process`, {
+  const res = await fetch(`${getApiUrl()}/rag/configure-and-process`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -186,7 +207,7 @@ export async function checkApiHealth(): Promise<{ status: string }> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    const res = await fetch(`${API_URL}/health`, {
+    const res = await fetch(`${getApiUrl()}/health`, {
       cache: "no-store",
       signal: controller.signal,
     });
@@ -204,7 +225,7 @@ export async function checkApiHealth(): Promise<{ status: string }> {
 }
 
 export async function listAvailableModels(): Promise<{ models: string[] }> {
-  const res = await fetch(`${API_URL}/models/list`, {
+  const res = await fetch(`${getApiUrl()}/models/list`, {
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch available models");
@@ -220,7 +241,7 @@ export type ChangelogEntry = {
 };
 
 export async function getChangelog(): Promise<ChangelogEntry[]> {
-  const res = await fetch(`${API_URL}/changelog`, { cache: "no-store" });
+  const res = await fetch(`${getApiUrl()}/changelog`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch changelog");
   return res.json();
 }
@@ -230,7 +251,7 @@ export async function createChangelogEntry(data: {
   date: string;
   changes: string[];
 }): Promise<ChangelogEntry> {
-  const res = await fetch(`${API_URL}/changelog`, {
+  const res = await fetch(`${getApiUrl()}/changelog`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),

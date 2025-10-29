@@ -15,6 +15,7 @@ import {
 import Modal from "@/components/Modal";
 import MarkdownViewer from "@/components/MarkdownViewer";
 import ChangelogCard from "@/components/ChangelogCard";
+import BackendSelector from "@/components/BackendSelector";
 import { useRouter } from "next/navigation";
 
 // Dashboard Statistics Card Component
@@ -650,6 +651,9 @@ export default function HomePage() {
 
       {activeTab === "dashboard" && (
         <div className="space-y-6">
+          {/* Backend Selector */}
+          <BackendSelector />
+
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             <StatsCard
               title="Toplam Ders Oturumu"
