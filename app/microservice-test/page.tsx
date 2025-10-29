@@ -237,6 +237,50 @@ export default function MicroserviceTestPage() {
         { name: "ChromaDB (403 bekleniyor)", status: "pending" },
       ],
     },
+    {
+      name: "PDF İşleme Testleri",
+      description: "Gerçek PDF dosyası işleme testleri",
+      color: "bg-red-100 text-red-600",
+      icon: <TestIcon />,
+      tests: [
+        { name: "PDF Upload Test", status: "pending" },
+        { name: "PDF → Markdown Conversion", status: "pending" },
+        { name: "Document Chunk Creation", status: "pending" },
+      ],
+    },
+    {
+      name: "LLM İnference Testleri",
+      description: "Model çıkarım ve query testleri",
+      color: "bg-yellow-100 text-yellow-600",
+      icon: <CommunicationIcon />,
+      tests: [
+        { name: "Simple Query Test", status: "pending" },
+        { name: "RAG Query Test", status: "pending" },
+        { name: "Model Response Validation", status: "pending" },
+      ],
+    },
+    {
+      name: "ChromaDB İntegrasyon Testleri",
+      description: "Vector database işlem testleri",
+      color: "bg-orange-100 text-orange-600",
+      icon: <ServerIcon />,
+      tests: [
+        { name: "Vector Storage Test", status: "pending" },
+        { name: "Similarity Search Test", status: "pending" },
+        { name: "Collection Management Test", status: "pending" },
+      ],
+    },
+    {
+      name: "End-to-End Pipeline",
+      description: "Tam RAG pipeline testleri",
+      color: "bg-indigo-100 text-indigo-600",
+      icon: <TestIcon />,
+      tests: [
+        { name: "Document Upload → Processing", status: "pending" },
+        { name: "Query → Vector Search → LLM", status: "pending" },
+        { name: "Response Generation Test", status: "pending" },
+      ],
+    },
   ]);
 
   const [overallResults, setOverallResults] = useState({
@@ -410,11 +454,433 @@ export default function MicroserviceTestPage() {
     }
   };
 
+  const runPdfProcessingTests = async () => {
+    const categoryIndex = 3;
+
+    // Set loading states
+    setTestCategories((prev) => {
+      const updated = [...prev];
+      updated[categoryIndex].tests = updated[categoryIndex].tests.map(
+        (test) => ({ ...test, status: "loading" })
+      );
+      return updated;
+    });
+
+    try {
+      // Test 1: PDF Upload Test
+      const testPdfData =
+        "JVBERi0xLjQKJdPr6eEKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovQ29udGVudHMgNCAwIFIKL1Jlc291cmNlcyA8PAovRm9udCA1IDAgUgo+Pgo+PgplbmRvYmoKNCAwIG9iago8PAovTGVuZ3RoIDQ0Cj4+CnN0cmVhbQpCVApxCi9GMSAxMiBUZgpUKlxuNTAgNzUwIFRkClxuKFRlc3QgRG9jdW1lbnQpVGoKUQpFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKPDwKL0YxIDYgMCBSCj4+CmVuZG9iago2IDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL0hlbHZldGljYQo+PgplbmRvYmoKeHJlZgowIDcKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAwNzQgMDAwMDAgbiAKMDAwMDAwMDEzMSAwMDAwMCBuIAowMDAwMDAwMjg1IDAwMDAwIG4gCjAwMDAwMDA0MDEgMDAwMDAgbiAKMDAwMDAwMDQzNiAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDcKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjUyMwolJUVPRgo=";
+
+      const blob = new Blob([atob(testPdfData)], { type: "application/pdf" });
+      const formData = new FormData();
+      formData.append("file", blob, "test.pdf");
+
+      const uploadResult = await fetch(`${apiUrl}/documents/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        updated[categoryIndex].tests[0] = {
+          name: "PDF Upload Test",
+          status: uploadResult.ok ? "success" : "error",
+          message: `Status: ${uploadResult.status} ${uploadResult.statusText}`,
+          duration: 0,
+        };
+        return updated;
+      });
+
+      // Test 2: PDF → Markdown Conversion (if upload succeeded)
+      let conversionData: any = null;
+      if (uploadResult.ok) {
+        const conversionResult = await fetch(`${apiUrl}/documents/convert`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: "test.pdf", format: "markdown" }),
+        });
+
+        conversionData = conversionResult.ok
+          ? await conversionResult.json()
+          : null;
+
+        setTestCategories((prev) => {
+          const updated = [...prev];
+          updated[categoryIndex].tests[1] = {
+            name: "PDF → Markdown Conversion",
+            status: conversionResult.ok ? "success" : "error",
+            message: `Status: ${conversionResult.status} ${conversionResult.statusText}`,
+            data: conversionData,
+            duration: 0,
+          };
+          return updated;
+        });
+      } else {
+        setTestCategories((prev) => {
+          const updated = [...prev];
+          updated[categoryIndex].tests[1] = {
+            name: "PDF → Markdown Conversion",
+            status: "error",
+            message: "Skipped: Upload failed",
+            duration: 0,
+          };
+          return updated;
+        });
+      }
+
+      // Test 3: Document Chunk Creation
+      if (uploadResult.ok) {
+        const chunkResult = await fetch(`${apiUrl}/documents/process-chunks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: "test.pdf",
+            chunk_strategy: "semantic",
+          }),
+        });
+
+        const chunkData = chunkResult.ok ? await chunkResult.json() : null;
+
+        setTestCategories((prev) => {
+          const updated = [...prev];
+          updated[categoryIndex].tests[2] = {
+            name: "Document Chunk Creation",
+            status: chunkResult.ok ? "success" : "error",
+            message: `Status: ${chunkResult.status} ${chunkResult.statusText}`,
+            data: chunkData,
+            duration: 0,
+          };
+          return updated;
+        });
+      } else {
+        setTestCategories((prev) => {
+          const updated = [...prev];
+          updated[categoryIndex].tests[2] = {
+            name: "Document Chunk Creation",
+            status: "error",
+            message: "Skipped: Upload failed",
+            duration: 0,
+          };
+          return updated;
+        });
+      }
+    } catch (error: any) {
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        updated[categoryIndex].tests.forEach((_, index) => {
+          if (updated[categoryIndex].tests[index].status === "loading") {
+            updated[categoryIndex].tests[index] = {
+              name: updated[categoryIndex].tests[index].name,
+              status: "error",
+              message: `Network Error: ${error.message}`,
+              duration: 0,
+            };
+          }
+        });
+        return updated;
+      });
+    }
+  };
+
+  const runLlmInferenceTests = async () => {
+    const categoryIndex = 4;
+
+    setTestCategories((prev) => {
+      const updated = [...prev];
+      updated[categoryIndex].tests = updated[categoryIndex].tests.map(
+        (test) => ({ ...test, status: "loading" })
+      );
+      return updated;
+    });
+
+    try {
+      // Test 1: Simple Query Test
+      const simpleQuery = await fetch(`${apiUrl}/query`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: "Test sorusu: 2+2 kaç eder?",
+          model: "llama-3.1-8b-instant",
+        }),
+      });
+
+      const simpleQueryData = simpleQuery.ok ? await simpleQuery.json() : null;
+
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        updated[categoryIndex].tests[0] = {
+          name: "Simple Query Test",
+          status: simpleQuery.ok ? "success" : "error",
+          message: `Status: ${simpleQuery.status} ${simpleQuery.statusText}`,
+          data: simpleQueryData,
+          duration: 0,
+        };
+        return updated;
+      });
+
+      // Test 2: RAG Query Test
+      const ragQuery = await fetch(`${apiUrl}/query-with-context`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: "Document tabanlı soru",
+          model: "llama-3.1-8b-instant",
+          use_rag: true,
+        }),
+      });
+
+      const ragQueryData = ragQuery.ok ? await ragQuery.json() : null;
+
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        updated[categoryIndex].tests[1] = {
+          name: "RAG Query Test",
+          status: ragQuery.ok ? "success" : "error",
+          message: `Status: ${ragQuery.status} ${ragQuery.statusText}`,
+          data: ragQueryData,
+          duration: 0,
+        };
+        return updated;
+      });
+
+      // Test 3: Model Response Validation
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        const hasValidResponse =
+          simpleQueryData?.response && simpleQueryData.response.length > 0;
+        updated[categoryIndex].tests[2] = {
+          name: "Model Response Validation",
+          status: hasValidResponse ? "success" : "error",
+          message: hasValidResponse
+            ? "Valid response received"
+            : "No valid response",
+          data: { responseLength: simpleQueryData?.response?.length || 0 },
+          duration: 0,
+        };
+        return updated;
+      });
+    } catch (error: any) {
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        updated[categoryIndex].tests.forEach((_, index) => {
+          if (updated[categoryIndex].tests[index].status === "loading") {
+            updated[categoryIndex].tests[index] = {
+              name: updated[categoryIndex].tests[index].name,
+              status: "error",
+              message: `Network Error: ${error.message}`,
+              duration: 0,
+            };
+          }
+        });
+        return updated;
+      });
+    }
+  };
+
+  const runChromaDbTests = async () => {
+    const categoryIndex = 5;
+
+    setTestCategories((prev) => {
+      const updated = [...prev];
+      updated[categoryIndex].tests = updated[categoryIndex].tests.map(
+        (test) => ({ ...test, status: "loading" })
+      );
+      return updated;
+    });
+
+    try {
+      // Test 1: Vector Storage Test
+      const vectorStorage = await fetch(`${apiUrl}/vector-store/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          texts: ["Test document for vector storage"],
+          collection_name: "test_collection",
+        }),
+      });
+
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        updated[categoryIndex].tests[0] = {
+          name: "Vector Storage Test",
+          status: vectorStorage.ok ? "success" : "error",
+          message: `Status: ${vectorStorage.status} ${vectorStorage.statusText}`,
+          duration: 0,
+        };
+        return updated;
+      });
+
+      // Test 2: Similarity Search Test
+      const similaritySearch = await fetch(`${apiUrl}/vector-store/search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: "test document",
+          collection_name: "test_collection",
+          n_results: 3,
+        }),
+      });
+
+      const searchData = similaritySearch.ok
+        ? await similaritySearch.json()
+        : null;
+
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        updated[categoryIndex].tests[1] = {
+          name: "Similarity Search Test",
+          status: similaritySearch.ok ? "success" : "error",
+          message: `Status: ${similaritySearch.status} ${similaritySearch.statusText}`,
+          data: searchData,
+          duration: 0,
+        };
+        return updated;
+      });
+
+      // Test 3: Collection Management Test
+      const collections = await fetch(`${apiUrl}/vector-store/collections`, {
+        method: "GET",
+      });
+
+      const collectionsData = collections.ok ? await collections.json() : null;
+
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        updated[categoryIndex].tests[2] = {
+          name: "Collection Management Test",
+          status: collections.ok ? "success" : "error",
+          message: `Status: ${collections.status} ${collections.statusText}`,
+          data: collectionsData,
+          duration: 0,
+        };
+        return updated;
+      });
+    } catch (error: any) {
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        updated[categoryIndex].tests.forEach((_, index) => {
+          if (updated[categoryIndex].tests[index].status === "loading") {
+            updated[categoryIndex].tests[index] = {
+              name: updated[categoryIndex].tests[index].name,
+              status: "error",
+              message: `Network Error: ${error.message}`,
+              duration: 0,
+            };
+          }
+        });
+        return updated;
+      });
+    }
+  };
+
+  const runEndToEndTests = async () => {
+    const categoryIndex = 6;
+
+    setTestCategories((prev) => {
+      const updated = [...prev];
+      updated[categoryIndex].tests = updated[categoryIndex].tests.map(
+        (test) => ({ ...test, status: "loading" })
+      );
+      return updated;
+    });
+
+    try {
+      // Test 1: Full Document Processing Pipeline
+      const testPdfData =
+        "JVBERi0xLjQKJdPr6eEKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovQ29udGVudHMgNCAwIFIKL1Jlc291cmNlcyA8PAovRm9udCA1IDAgUgo+Pgo+PgplbmRvYmoKNCAwIG9iago8PAovTGVuZ3RoIDQ0Cj4+CnN0cmVhbQpCVApxCi9GMSAxMiBUZgpUKlxuNTAgNzUwIFRkClxuKFRlc3QgRG9jdW1lbnQpVGoKUQpFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKPDwKL0YxIDYgMCBSCj4+CmVuZG9iago2IDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL0hlbHZldGljYQo+PgplbmRvYmoKeHJlZgowIDcKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAwNzQgMDAwMDAgbiAKMDAwMDAwMDEzMSAwMDAwMCBuIAowMDAwMDAwMjg1IDAwMDAwIG4gCjAwMDAwMDA0MDEgMDAwMDAgbiAKMDAwMDAwMDQzNiAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDcKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjUyMwolJUVPRgo=";
+
+      const blob = new Blob([atob(testPdfData)], { type: "application/pdf" });
+      const formData = new FormData();
+      formData.append("file", blob, "e2e_test.pdf");
+
+      const fullUpload = await fetch(`${apiUrl}/documents/upload-and-process`, {
+        method: "POST",
+        body: formData,
+      });
+
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        updated[categoryIndex].tests[0] = {
+          name: "Document Upload → Processing",
+          status: fullUpload.ok ? "success" : "error",
+          message: `Status: ${fullUpload.status} ${fullUpload.statusText}`,
+          duration: 0,
+        };
+        return updated;
+      });
+
+      // Test 2: Full RAG Query Pipeline
+      const fullRagQuery = await fetch(`${apiUrl}/rag-query`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: "Bu dokümanda ne yazıyor?",
+          model: "llama-3.1-8b-instant",
+          collection_name: "test_collection",
+        }),
+      });
+
+      const ragData = fullRagQuery.ok ? await fullRagQuery.json() : null;
+
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        updated[categoryIndex].tests[1] = {
+          name: "Query → Vector Search → LLM",
+          status: fullRagQuery.ok ? "success" : "error",
+          message: `Status: ${fullRagQuery.status} ${fullRagQuery.statusText}`,
+          data: ragData,
+          duration: 0,
+        };
+        return updated;
+      });
+
+      // Test 3: Response Generation Validation
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        const hasCompleteResponse =
+          ragData?.response && ragData?.context && ragData?.model;
+        updated[categoryIndex].tests[2] = {
+          name: "Response Generation Test",
+          status: hasCompleteResponse ? "success" : "error",
+          message: hasCompleteResponse
+            ? "Complete RAG response generated"
+            : "Incomplete response",
+          data: {
+            hasResponse: !!ragData?.response,
+            hasContext: !!ragData?.context,
+            hasModel: !!ragData?.model,
+          },
+          duration: 0,
+        };
+        return updated;
+      });
+    } catch (error: any) {
+      setTestCategories((prev) => {
+        const updated = [...prev];
+        updated[categoryIndex].tests.forEach((_, index) => {
+          if (updated[categoryIndex].tests[index].status === "loading") {
+            updated[categoryIndex].tests[index] = {
+              name: updated[categoryIndex].tests[index].name,
+              status: "error",
+              message: `Network Error: ${error.message}`,
+              duration: 0,
+            };
+          }
+        });
+        return updated;
+      });
+    }
+  };
+
   const runAllTests = async () => {
     await Promise.all([
       runApiGatewayTests(),
       runCommunicationTests(),
       runSecurityTests(),
+      runPdfProcessingTests(),
+      runLlmInferenceTests(),
+      runChromaDbTests(),
+      runEndToEndTests(),
     ]);
   };
 
@@ -515,7 +981,15 @@ export default function MicroserviceTestPage() {
                 ? runApiGatewayTests
                 : index === 1
                 ? runCommunicationTests
-                : runSecurityTests
+                : index === 2
+                ? runSecurityTests
+                : index === 3
+                ? runPdfProcessingTests
+                : index === 4
+                ? runLlmInferenceTests
+                : index === 5
+                ? runChromaDbTests
+                : runEndToEndTests
             }
           />
         ))}
