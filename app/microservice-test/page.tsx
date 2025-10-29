@@ -475,9 +475,9 @@ export default function MicroserviceTestPage() {
       const formData = new FormData();
       formData.append("file", blob, "test.pdf");
 
-      // Note: Upload endpoint might not exist, testing with feedback endpoint instead
-      const uploadResult = await fetch(`${apiUrl}/api/feedback`, {
-        method: "GET",
+      const uploadResult = await fetch(`${apiUrl}/documents/upload`, {
+        method: "POST",
+        body: formData,
       });
 
       setTestCategories((prev) => {
@@ -494,10 +494,14 @@ export default function MicroserviceTestPage() {
       // Test 2: PDF → Markdown Conversion (if upload succeeded)
       let conversionData: any = null;
       if (uploadResult.ok) {
-        // Using available endpoint for demonstration
-        const conversionResult = await fetch(`${apiUrl}/health`, {
-          method: "GET",
-        });
+        const conversionResult = await fetch(
+          `${apiUrl}/documents/convert-document-to-markdown`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ filename: "test.pdf" }),
+          }
+        );
 
         conversionData = conversionResult.ok
           ? await conversionResult.json()
@@ -529,9 +533,13 @@ export default function MicroserviceTestPage() {
 
       // Test 3: Document Chunk Creation
       if (uploadResult.ok) {
-        // Using available endpoint for demonstration
-        const chunkResult = await fetch(`${apiUrl}/sessions`, {
-          method: "GET",
+        const chunkResult = await fetch(`${apiUrl}/rag/configure-and-process`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: "test.pdf",
+            chunk_strategy: "semantic",
+          }),
         });
 
         const chunkData = chunkResult.ok ? await chunkResult.json() : null;
@@ -590,12 +598,11 @@ export default function MicroserviceTestPage() {
 
     try {
       // Test 1: Simple Query Test
-      const simpleQuery = await fetch(`${apiUrl}/api/query`, {
+      const simpleQuery = await fetch(`${apiUrl}/rag/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: "Test sorusu: 2+2 kaç eder?",
-          user_id: "test_user",
           session_id: "test_session",
         }),
       });
@@ -614,13 +621,12 @@ export default function MicroserviceTestPage() {
         return updated;
       });
 
-      // Test 2: RAG Query Test (same endpoint, different query)
-      const ragQuery = await fetch(`${apiUrl}/api/query`, {
+      // Test 2: RAG Query Test
+      const ragQuery = await fetch(`${apiUrl}/rag/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: "Document tabanlı soru test",
-          user_id: "test_user_rag",
           session_id: "test_session_rag",
         }),
       });
@@ -685,13 +691,13 @@ export default function MicroserviceTestPage() {
     });
 
     try {
-      // Test 1: Vector Storage Test (using available endpoint)
-      const vectorStorage = await fetch(`${apiUrl}/api/query`, {
+      // Test 1: Session Create Test (ChromaDB session)
+      const vectorStorage = await fetch(`${apiUrl}/sessions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          query: "Vector storage test",
-          user_id: "vector_test",
+          user_id: "vector_test_user",
+          session_name: "Vector Storage Test",
         }),
       });
 
@@ -706,9 +712,14 @@ export default function MicroserviceTestPage() {
         return updated;
       });
 
-      // Test 2: Similarity Search Test (using available endpoint)
-      const similaritySearch = await fetch(`${apiUrl}/models`, {
-        method: "GET",
+      // Test 2: Similarity Search Test via RAG Query
+      const similaritySearch = await fetch(`${apiUrl}/rag/query`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: "test document search",
+          session_id: "similarity_test_session",
+        }),
       });
 
       const searchData = similaritySearch.ok
@@ -727,8 +738,8 @@ export default function MicroserviceTestPage() {
         return updated;
       });
 
-      // Test 3: Collection Management Test (using available endpoint)
-      const collections = await fetch(`${apiUrl}/sessions`, {
+      // Test 3: Document List Test (ChromaDB collections equivalent)
+      const collections = await fetch(`${apiUrl}/documents/list-markdown`, {
         method: "GET",
       });
 
@@ -783,13 +794,12 @@ export default function MicroserviceTestPage() {
       const formData = new FormData();
       formData.append("file", blob, "e2e_test.pdf");
 
-      // Test with available API endpoint
-      const fullUpload = await fetch(`${apiUrl}/api/query`, {
+      const fullUpload = await fetch(`${apiUrl}/rag/configure-and-process`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          query: "End-to-end document processing test",
-          user_id: "e2e_test",
+          filename: "e2e_test.pdf",
+          chunk_strategy: "semantic",
         }),
       });
 
@@ -805,13 +815,12 @@ export default function MicroserviceTestPage() {
       });
 
       // Test 2: Full RAG Query Pipeline
-      const fullRagQuery = await fetch(`${apiUrl}/api/query`, {
+      const fullRagQuery = await fetch(`${apiUrl}/rag/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: "Bu dokümanda ne yazıyor?",
-          user_id: "full_rag_test",
-          session_id: "rag_session",
+          session_id: "full_rag_session",
         }),
       });
 
