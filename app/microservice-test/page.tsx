@@ -383,15 +383,15 @@ export default function MicroserviceTestPage() {
     const privateServices = [
       {
         name: "PDF Processor (403 bekleniyor)",
-        url: "https://pdf-processor-awe3elsvra-ew.a.run.app/health",
+        url: "https://pdf-processor-1051060211087.europe-west1.run.app/health",
       },
       {
         name: "Model Inferencer (403 bekleniyor)",
-        url: "https://model-inferencer-awe3elsvra-ew.a.run.app/health",
+        url: "https://model-inferencer-1051060211087.europe-west1.run.app/health",
       },
       {
         name: "ChromaDB (403 bekleniyor)",
-        url: "https://chromadb-awe3elsvra-ew.a.run.app/api/v1/heartbeat",
+        url: "https://chromadb-1051060211087.europe-west1.run.app/api/v1/heartbeat",
       },
     ];
 
