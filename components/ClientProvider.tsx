@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { checkApiHealth, setGlobalApiUrl } from "@/lib/api";
+import { setGlobalApiUrl } from "@/lib/api";
 import Link from "next/link";
 import MobileMenu from "./MobileMenu";
 import { BackendProvider, useBackend } from "@/contexts/BackendContext";
@@ -12,16 +12,13 @@ function ClientProviderInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isLoginPage = pathname === "/login";
-  const { apiUrl, backendType } = useBackend();
+  const { apiUrl } = useBackend();
 
-  const [apiStatus, setApiStatus] = useState<"online" | "offline" | "loading">(
-    "loading"
-  );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Update global API URL when backend type changes
+  // Update global API URL when backend changes
   useEffect(() => {
     setGlobalApiUrl(apiUrl);
   }, [apiUrl]);
@@ -36,25 +33,6 @@ function ClientProviderInner({ children }: { children: React.ReactNode }) {
       router.replace("/login");
     }
   }, [router, pathname, isLoginPage]);
-
-  // API Health check
-  useEffect(() => {
-    if (isLoginPage || !isClient) return;
-
-    const checkStatus = async () => {
-      try {
-        await checkApiHealth();
-        setApiStatus("online");
-      } catch (error) {
-        setApiStatus("offline");
-      }
-    };
-
-    checkStatus();
-    const interval = setInterval(checkStatus, 30000);
-
-    return () => clearInterval(interval);
-  }, [isLoginPage, isClient, apiUrl]); // Include apiUrl in dependency
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
@@ -109,29 +87,6 @@ function ClientProviderInner({ children }: { children: React.ReactNode }) {
 
             {/* Desktop Menu - Simple Tailwind responsive */}
             <nav className="hidden md:flex items-center space-x-6">
-              <div className="flex items-center space-x-2">
-                <div className="flex items-center space-x-2 text-xs">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      apiStatus === "online"
-                        ? "bg-green-500"
-                        : apiStatus === "offline"
-                        ? "bg-red-500"
-                        : "bg-yellow-500"
-                    }`}
-                  />
-                  <span className="text-muted-foreground">
-                    {backendType === "local" ? "Local" : "Cloud"} Backend
-                  </span>
-                  <span className="font-medium">
-                    {apiStatus === "online"
-                      ? "Online"
-                      : apiStatus === "offline"
-                      ? "Offline"
-                      : "Checking..."}
-                  </span>
-                </div>
-              </div>
               <button
                 onClick={handleLogout}
                 className="text-sm font-medium text-foreground hover:text-primary transition-colors"
@@ -168,8 +123,6 @@ function ClientProviderInner({ children }: { children: React.ReactNode }) {
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
         onLogout={handleLogout}
-        apiStatus={apiStatus}
-        backendType={backendType}
       />
 
       <main className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 min-h-[calc(100vh-8rem)] animate-fade-in">

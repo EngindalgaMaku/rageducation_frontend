@@ -15,7 +15,6 @@ import {
 import Modal from "@/components/Modal";
 import MarkdownViewer from "@/components/MarkdownViewer";
 import ChangelogCard from "@/components/ChangelogCard";
-import BackendSelector from "@/components/BackendSelector";
 import { useRouter } from "next/navigation";
 
 // Dashboard Statistics Card Component
@@ -651,8 +650,55 @@ export default function HomePage() {
 
       {activeTab === "dashboard" && (
         <div className="space-y-6">
-          {/* Backend Selector */}
-          <BackendSelector />
+          {/* Microservice Test Link */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-bold text-foreground">
+                    Mikroservis Test Dashboard
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Tüm mikroservislerin durumunu kontrol edin
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => router.push("/microservice-test")}
+                className="btn btn-primary btn-sm"
+              >
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+                Test Et
+              </button>
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             <StatsCard
