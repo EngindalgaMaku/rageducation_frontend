@@ -86,8 +86,8 @@ export default function DocumentUploadModal({
   const [isDragOver, setIsDragOver] = useState(false);
   const [processingStep, setProcessingStep] = useState("");
 
-  const handlePdfUpload = async (e: FormEvent) => {
-    e.preventDefault();
+  const handlePdfUpload = async (e?: FormEvent) => {
+    if (e) e.preventDefault();
     if (!selectedFile) return;
 
     try {
@@ -235,7 +235,7 @@ export default function DocumentUploadModal({
             </div>
           ) : (
             // Upload Form
-            <form onSubmit={handlePdfUpload} className="space-y-6">
+            <div className="space-y-6">
               {/* Drag & Drop Zone */}
               <div
                 className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
@@ -313,7 +313,7 @@ export default function DocumentUploadModal({
                   </div>
                 </div>
               )}
-            </form>
+            </div>
           )}
         </div>
 
@@ -329,7 +329,8 @@ export default function DocumentUploadModal({
             </button>
             {!isConverting && (
               <button
-                onClick={handlePdfUpload}
+                type="button"
+                onClick={() => handlePdfUpload()}
                 disabled={!selectedFile}
                 className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
