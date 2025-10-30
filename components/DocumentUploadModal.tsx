@@ -238,34 +238,53 @@ export default function DocumentUploadModal({
             <div className="space-y-6">
               {/* Drag & Drop Zone */}
               <div
-                className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
+                className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+                  selectedFile ? "cursor-default" : "cursor-pointer"
+                } ${
                   isDragOver
                     ? "border-primary bg-primary/5"
+                    : selectedFile
+                    ? "border-green-300 bg-green-50"
                     : "border-border hover:border-primary/50 hover:bg-muted/30"
                 }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onClick={() => document.getElementById("file-upload")?.click()}
               >
-                <div className="flex flex-col items-center gap-4">
-                  <div
-                    className={`p-4 rounded-full ${
-                      isDragOver ? "bg-primary/20" : "bg-muted/50"
-                    }`}
-                  >
-                    <UploadIcon className="w-12 h-12" />
+                {selectedFile ? (
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="p-4 rounded-full bg-green-100">
+                      <DocumentIcon />
+                    </div>
+                    <div>
+                      <p className="text-lg font-medium text-green-600">
+                        ✅ Dosya Seçildi
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {selectedFile.name} -{" "}
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-lg font-medium text-foreground">
-                      <span className="text-primary">Tıklayın</span> veya
-                      belgenizi buraya sürükleyin
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      PDF, DOCX, PPTX, XLSX • Maks. 50MB
-                    </p>
+                ) : (
+                  <div className="flex flex-col items-center gap-4">
+                    <div
+                      className={`p-4 rounded-full ${
+                        isDragOver ? "bg-primary/20" : "bg-muted/50"
+                      }`}
+                    >
+                      <UploadIcon className="w-12 h-12" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-medium text-foreground">
+                        Belgenizi buraya sürükleyin
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        PDF, DOCX, PPTX, XLSX • Maks. 50MB
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
                 <input
                   type="file"
                   id="file-upload"
@@ -276,43 +295,30 @@ export default function DocumentUploadModal({
                 />
               </div>
 
-              {/* Selected File Display */}
-              {selectedFile && (
-                <div className="animate-slide-up p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center text-primary">
-                      <DocumentIcon />
-                      <div className="ml-3">
-                        <p className="font-medium text-sm">
-                          {selectedFile.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleRemoveFile}
-                      className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
+              {/* File Select Button */}
+              {!selectedFile && (
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document.getElementById("file-upload")?.click()
+                    }
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-all"
+                  >
+                    <UploadIcon className="w-5 h-5" />
+                    Dosya Seç
+                  </button>
                 </div>
               )}
+
+              <input
+                type="file"
+                id="file-upload"
+                onChange={handleFileSelect}
+                className="hidden"
+                accept=".pdf,.docx,.pptx,.xlsx"
+                disabled={isConverting}
+              />
             </div>
           )}
         </div>
