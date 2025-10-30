@@ -199,8 +199,7 @@ export default function FileUploadModal({
           </h2>
           <button
             onClick={onClose}
-            disabled={isProcessing}
-            className="p-2 hover:bg-muted rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
           >
             <CloseIcon />
           </button>
@@ -366,8 +365,7 @@ export default function FileUploadModal({
           <div className="flex gap-3 justify-end">
             <button
               onClick={onClose}
-              disabled={isProcessing}
-              className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {isProcessing ? "Arka Planda Devam Et" : "İptal"}
             </button>

@@ -207,8 +207,7 @@ export default function DocumentUploadModal({
           </div>
           <button
             onClick={onClose}
-            disabled={isConverting}
-            className="p-2 hover:bg-muted rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
           >
             <CloseIcon />
           </button>
@@ -328,8 +327,7 @@ export default function DocumentUploadModal({
           <div className="flex gap-3 justify-end">
             <button
               onClick={onClose}
-              disabled={isConverting}
-              className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {isConverting ? "Arka Planda Devam Et" : "İptal"}
             </button>

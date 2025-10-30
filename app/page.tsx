@@ -862,6 +862,23 @@ export default function HomePage() {
             <h2 className="text-lg font-medium text-gray-900 mb-4">
               Oturuma Markdown Belgeleri Ekle
             </h2>
+
+            <div className="mb-4">
+              <label className="label mb-2">Ders Oturumu Seçin</label>
+              <select
+                value={selectedSessionId}
+                onChange={(e) => setSelectedSessionId(e.target.value)}
+                className="input text-sm py-2 px-3 w-full max-w-md"
+              >
+                <option value="">Ders Oturumu Seçin</option>
+                {sessions.map((session) => (
+                  <option key={session.session_id} value={session.session_id}>
+                    {session.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {!selectedSessionId ? (
               <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
                 <p className="text-yellow-800">
@@ -1074,17 +1091,74 @@ export default function HomePage() {
       {activeTab === "query" && (
         <div className="bg-card rounded-xl shadow-lg flex flex-col h-[70vh]">
           <div className="p-4 border-b border-border">
-            <div className="flex flex-col space-y-3 md:flex-row md:justify-between md:items-center md:space-y-0">
+            <div className="flex flex-col space-y-3">
               <div>
                 <h2 className="text-lg font-bold text-foreground">
                   RAG Tabanlı Chatbot
                 </h2>
-                {!selectedSessionId ? (
-                  <p className="text-xs text-yellow-600">
-                    Sohbeti başlatmak için bir ders oturumu seçin.
-                  </p>
-                ) : (
-                  <p className="text-xs text-green-600">
+                <p className="text-xs text-muted-foreground">
+                  Ders oturumunuzdaki belgeler üzerinde soru sorun
+                </p>
+              </div>
+
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex items-center gap-2">
+                  <label
+                    htmlFor="session-select"
+                    className="text-sm font-medium text-muted-foreground"
+                  >
+                    Ders Oturumu:
+                  </label>
+                  <select
+                    id="session-select"
+                    value={selectedSessionId}
+                    onChange={(e) => setSelectedSessionId(e.target.value)}
+                    className="input text-sm py-1 px-2 w-48 md:w-56"
+                  >
+                    <option value="">Oturum Seçin</option>
+                    {sessions.map((session) => (
+                      <option
+                        key={session.session_id}
+                        value={session.session_id}
+                      >
+                        {session.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <label
+                    htmlFor="model-select"
+                    className="text-sm font-medium text-muted-foreground"
+                  >
+                    LLM Modeli:
+                  </label>
+                  <select
+                    id="model-select"
+                    value={selectedQueryModel}
+                    onChange={(e) => setSelectedQueryModel(e.target.value)}
+                    className="input text-sm py-1 px-2 w-40 md:w-48"
+                    disabled={modelsLoading || availableModels.length === 0}
+                  >
+                    {modelsLoading ? (
+                      <option>Yükleniyor...</option>
+                    ) : availableModels.length === 0 ? (
+                      <option>Model bulunamadı</option>
+                    ) : (
+                      availableModels.map((model) => (
+                        <option key={model} value={model}>
+                          {model}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              {selectedSessionId && (
+                <div className="p-2 bg-green-50 border border-green-200 rounded-md">
+                  <p className="text-green-800 text-xs">
                     Seçili ders oturumu:{" "}
                     <strong>
                       {
@@ -1093,35 +1167,8 @@ export default function HomePage() {
                       }
                     </strong>
                   </p>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="model-select"
-                  className="text-sm font-medium text-muted-foreground"
-                >
-                  LLM Modeli:
-                </label>
-                <select
-                  id="model-select"
-                  value={selectedQueryModel}
-                  onChange={(e) => setSelectedQueryModel(e.target.value)}
-                  className="input text-sm py-1 px-2 w-40 md:w-48"
-                  disabled={modelsLoading || availableModels.length === 0}
-                >
-                  {modelsLoading ? (
-                    <option>Yükleniyor...</option>
-                  ) : availableModels.length === 0 ? (
-                    <option>Model bulunamadı</option>
-                  ) : (
-                    availableModels.map((model) => (
-                      <option key={model} value={model}>
-                        {model}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </div>
+                </div>
+              )}
             </div>
           </div>
 
