@@ -15,6 +15,7 @@ import {
 import Modal from "@/components/Modal";
 import MarkdownViewer from "@/components/MarkdownViewer";
 import ChangelogCard from "@/components/ChangelogCard";
+import DocumentUploadModal from "@/components/DocumentUploadModal";
 import { useRouter } from "next/navigation";
 
 // Dashboard Statistics Card Component
@@ -294,10 +295,9 @@ export default function HomePage() {
   const [addingDocuments, setAddingDocuments] = useState(false);
 
   // PDF to Markdown conversion states
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isConverting, setIsConverting] = useState(false);
+  const [isDocumentUploadModalOpen, setIsDocumentUploadModalOpen] =
+    useState(false);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
 
   // Modal viewer states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -488,89 +488,12 @@ export default function HomePage() {
     );
   }
 
-  const handlePdfUpload = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!selectedFile) return;
-
-    try {
-      setIsConverting(true);
-      setError(null);
-      setSuccess(null);
-
-      const result = await convertPdfToMarkdown(selectedFile);
-
-      if (result.success) {
-        setSuccess(
-          `Belge başarıyla Markdown formatına dönüştürüldü: ${result.markdown_filename}`
-        );
-        setSelectedFile(null);
-        const fileInput = document.getElementById(
-          "pdf-file"
-        ) as HTMLInputElement;
-        if (fileInput) fileInput.value = "";
-
-        setTimeout(async () => {
-          await fetchMarkdownFiles();
-        }, 1000);
-      } else {
-        setError(result.message || "Dönüştürme işlemi başarısız");
-      }
-    } catch (e: any) {
-      setError(e.message || "Belge dönüştürme işlemi başarısız");
-    } finally {
-      setIsConverting(false);
-    }
+  const handleDocumentUploadSuccess = (message: string) => {
+    setSuccess(message);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const file = files[0];
-      const supportedTypes = [
-        "application/pdf",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation", // PPTX
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // XLSX
-      ];
-
-      if (file && supportedTypes.includes(file.type)) {
-        setSelectedFile(file);
-        setError(null);
-      } else {
-        setError("Lütfen sadece PDF, DOCX, PPTX veya XLSX dosyası seçin");
-      }
-    }
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    if (file) {
-      const supportedTypes = [
-        "application/pdf",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation", // PPTX
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // XLSX
-      ];
-
-      if (supportedTypes.includes(file.type)) {
-        setSelectedFile(file);
-        setError(null);
-      } else {
-        setError("Lütfen sadece PDF, DOCX, PPTX veya XLSX dosyası seçin");
-      }
-    }
+  const handleDocumentUploadError = (error: string) => {
+    setError(error);
   };
 
   const handleViewMarkdownFile = async (filename: string) => {
@@ -896,105 +819,43 @@ export default function HomePage() {
       {activeTab === "upload" && (
         <div className="space-y-6">
           <div className="bg-card p-8 rounded-xl shadow-lg">
-            <div className="flex items-center mb-6">
-              <div className="p-3 bg-primary/10 text-primary rounded-xl mr-4">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <div className="p-3 bg-primary/10 text-primary rounded-xl mr-4">
+                  <UploadIcon />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">
+                    Belge'den Markdown'a
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    PDF, DOCX, PPTX, XLSX belgelerinizi RAG için hazırlayın
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsDocumentUploadModalOpen(true)}
+                className="btn btn-primary"
+              >
                 <UploadIcon />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-foreground">
-                  Belge'den Markdown'a
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  PDF, DOCX, PPTX, XLSX belgelerinizi RAG için hazırlayın
-                </p>
-              </div>
+                <span className="ml-2">Belge Yükle</span>
+              </button>
             </div>
 
             {success && (
               <div className="alert alert-success mb-4">{success}</div>
             )}
 
-            <form onSubmit={handlePdfUpload} className="space-y-6">
-              <div
-                className={`dropzone ${isDragOver ? "dropzone-active" : ""}`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => document.getElementById("pdf-file")?.click()}
-              >
-                <div className="dropzone-icon">
-                  <UploadIcon />
-                </div>
-                <p className="dropzone-text">
-                  <span className="dropzone-highlight">Tıklayın</span> veya
-                  belgenizi buraya sürükleyin
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  PDF, DOCX, PPTX, XLSX • Maks. 50MB
-                </p>
-                <input
-                  type="file"
-                  id="pdf-file"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  accept=".pdf,.docx,.pptx,.xlsx"
-                  disabled={isConverting}
-                />
+            <div className="text-center text-muted-foreground py-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                <UploadIcon />
               </div>
-
-              {selectedFile && (
-                <div className="animate-slide-up p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center text-primary text-sm">
-                      <DocumentIcon />
-                      <div className="ml-3">
-                        <p className="font-medium">{selectedFile.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedFile(null)}
-                      className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                className="btn btn-primary w-full"
-                disabled={!selectedFile || isConverting}
-              >
-                {isConverting ? (
-                  <>
-                    <div className="spinner mr-2"></div>
-                    Dönüştürülüyor...
-                  </>
-                ) : (
-                  <>
-                    <UploadIcon />
-                    <span className="ml-2">Dönüştür ve Yükle</span>
-                  </>
-                )}
-              </button>
-            </form>
+              <p className="font-medium">Belge Dönüştürme Merkezi</p>
+              <p className="text-sm mt-1">
+                Belgelerinizi Markdown formatına dönüştürmek için yukarıdaki
+                butona tıklayın
+              </p>
+            </div>
           </div>
 
           <div className="card">
@@ -1421,6 +1282,15 @@ export default function HomePage() {
           </div>
         </form>
       </Modal>
+
+      {/* Document Upload Modal */}
+      <DocumentUploadModal
+        isOpen={isDocumentUploadModalOpen}
+        onClose={() => setIsDocumentUploadModalOpen(false)}
+        onSuccess={handleDocumentUploadSuccess}
+        onError={handleDocumentUploadError}
+        onMarkdownFilesUpdate={fetchMarkdownFiles}
+      />
 
       {/* Markdown Viewer Modal */}
       <Modal
