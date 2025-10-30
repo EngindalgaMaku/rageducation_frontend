@@ -1,8 +1,6 @@
 "use client";
-import React, { useState, useEffect, FormEvent } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  listMarkdownFiles,
-  configureAndProcess,
   getChunksForSession,
   listSessions,
   SessionMeta,
@@ -10,6 +8,7 @@ import {
 } from "@/lib/api";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import FileUploadModal from "@/components/FileUploadModal";
 
 // Icons
 const BackIcon = () => (
@@ -88,6 +87,22 @@ const PlayIcon = () => (
   </svg>
 );
 
+const AddDocumentIcon = () => (
+  <svg
+    className="w-5 h-5"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+    />
+  </svg>
+);
+
 // Chunk Card Component
 function ChunkCard({ chunk, index }: { chunk: Chunk; index: number }) {
   return (
@@ -129,33 +144,13 @@ export default function SessionPage() {
   // State management
   const [session, setSession] = useState<SessionMeta | null>(null);
   const [chunks, setChunks] = useState<Chunk[]>([]);
-  const [markdownFiles, setMarkdownFiles] = useState<string[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [chunkPage, setChunkPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
   const CHUNKS_PER_PAGE = 10;
-
-  // Form configuration state
-  const [chunkStrategy, setChunkStrategy] = useState("markdown");
-  const [chunkSize, setChunkSize] = useState(1000);
-  const [chunkOverlap, setChunkOverlap] = useState(200);
-  const [embeddingModel, setEmbeddingModel] = useState("mxbai-embed-large");
-
-  // Available options
-  const chunkStrategies = [
-    { value: "markdown", label: "Markdown Sections" },
-    { value: "fixed", label: "Fixed Size" },
-    { value: "semantic", label: "Semantic Chunking" },
-  ];
-
-  const embeddingModels = [
-    { value: "mxbai-embed-large", label: "mxbai-embed-large" },
-    { value: "nomic-embed-text", label: "nomic-embed-text" },
-    { value: "all-minilm", label: "all-MiniLM-L6-v2" },
-  ];
 
   // Fetch session details
   const fetchSessionDetails = async () => {
@@ -186,64 +181,21 @@ export default function SessionPage() {
     }
   };
 
-  // Fetch available markdown files
-  const fetchMarkdownFiles = async () => {
-    try {
-      const files = await listMarkdownFiles();
-      setMarkdownFiles(files);
-    } catch (e: any) {
-      setError(e.message || "Markdown dosyaları yüklenemedi");
-    }
-  };
-
-  // Handle markdown file selection
-  const handleFileToggle = (filename: string) => {
-    setSelectedFiles((prev) =>
-      prev.includes(filename)
-        ? prev.filter((f) => f !== filename)
-        : [...prev, filename]
+  // Handle modal success
+  const handleModalSuccess = async (result: any) => {
+    setSuccess(
+      `RAG işlemi tamamlandı! ${result.processed_files} dosya işlendi, ${result.total_chunks} parça oluşturuldu.`
     );
+    setProcessing(false);
+    // Refresh chunks after successful processing
+    await fetchChunks();
+    await fetchSessionDetails();
   };
 
-  // Handle form submission
-  const handleConfigureAndProcess = async (e: FormEvent) => {
-    e.preventDefault();
-    if (selectedFiles.length === 0) {
-      setError("En az bir Markdown dosyası seçmelisiniz");
-      return;
-    }
-
-    try {
-      setProcessing(true);
-      setError(null);
-      setSuccess(null);
-
-      const result = await configureAndProcess({
-        session_id: sessionId,
-        markdown_files: selectedFiles,
-        chunk_strategy: chunkStrategy,
-        chunk_size: chunkSize,
-        chunk_overlap: chunkOverlap,
-        embedding_model: embeddingModel,
-      });
-
-      if (result.success) {
-        setSuccess(
-          `RAG işlemi tamamlandı! ${result.processed_files} dosya işlendi, ${result.total_chunks} parça oluşturuldu.`
-        );
-        setSelectedFiles([]);
-
-        // Refresh chunks after successful processing
-        await fetchChunks();
-        await fetchSessionDetails();
-      } else {
-        setError(result.message || "İşlem başarısız");
-      }
-    } catch (e: any) {
-      setError(e.message || "RAG konfigürasyonu başarısız");
-    } finally {
-      setProcessing(false);
-    }
+  // Handle modal error
+  const handleModalError = (error: string) => {
+    setError(error);
+    setProcessing(false);
   };
 
   // Initial data loading
@@ -251,9 +203,23 @@ export default function SessionPage() {
     if (sessionId) {
       fetchSessionDetails();
       fetchChunks();
-      fetchMarkdownFiles();
     }
   }, [sessionId]);
+
+  // Clear messages after some time
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(null), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
 
   if (!sessionId) {
     return (
@@ -312,166 +278,60 @@ export default function SessionPage() {
 
       {/* RAG Configuration Section */}
       <div className="bg-card p-4 md:p-6 lg:p-8 rounded-xl shadow-lg">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center mb-6 gap-3">
-          <div className="p-3 bg-primary/10 text-primary rounded-xl flex-shrink-0">
-            <ConfigIcon />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+          <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+            <div className="p-3 bg-primary/10 text-primary rounded-xl flex-shrink-0">
+              <ConfigIcon />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg md:text-xl font-bold text-foreground">
+                RAG Konfigürasyonu
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Belgeleri parçalara ayırın ve vektör veritabanını oluşturun
+              </p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg md:text-xl font-bold text-foreground">
-              RAG Konfigürasyonu
-            </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Belgeleri parçalara ayırın ve vektör veritabanını oluşturun
-            </p>
-          </div>
+          <button
+            onClick={() => setShowModal(true)}
+            disabled={processing}
+            className="w-full sm:w-auto py-3 px-6 bg-primary text-primary-foreground rounded-lg font-medium text-sm flex items-center justify-center gap-3 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all touch-manipulation"
+          >
+            <AddDocumentIcon />
+            <span>Belge Yükle & İşle</span>
+          </button>
         </div>
 
-        <form onSubmit={handleConfigureAndProcess} className="space-y-6">
-          {/* Markdown Files Selection */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-3">
-              Markdown Dosyaları Seçin
-            </label>
-            <div className="max-h-48 md:max-h-56 overflow-y-auto border border-border rounded-lg bg-background">
-              {markdownFiles.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <div className="text-sm">Markdown dosyası bulunamadı</div>
+        {/* Processing Status */}
+        {processing && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent flex-shrink-0 mt-0.5"></div>
+              <div>
+                <div className="text-blue-800 font-medium text-sm mb-1">
+                  Markdown İşlemi Devam Ediyor
                 </div>
-              ) : (
-                markdownFiles.map((filename) => (
-                  <div
-                    key={filename}
-                    className="flex items-start p-4 hover:bg-muted/50 border-b border-border last:border-b-0 transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedFiles.includes(filename)}
-                      onChange={() => handleFileToggle(filename)}
-                      className="mt-0.5 mr-4 h-5 w-5 text-primary rounded border-border focus:ring-primary focus:ring-2 flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-foreground truncate">
-                        {filename.replace(".md", "")}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1 truncate">
-                        {filename}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            {selectedFiles.length > 0 && (
-              <div className="mt-3 px-3 py-2 bg-primary/10 rounded-lg">
-                <div className="text-sm text-primary font-medium">
-                  {selectedFiles.length} dosya seçili
+                <div className="text-blue-700 text-sm mb-2">
+                  İşlem arka planda devam ediyor - Bitince sonuçlar otomatik
+                  olarak burada görünecek
+                </div>
+                <div className="text-blue-600 text-xs">
+                  💡 Bu sırada sayfada başka işlemler yapabilirsiniz
                 </div>
               </div>
-            )}
-          </div>
-
-          {/* Configuration Parameters */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-            <div className="space-y-2">
-              <label
-                htmlFor="chunk_strategy"
-                className="block text-sm font-medium text-foreground"
-              >
-                Parçalama Stratejisi
-              </label>
-              <select
-                id="chunk_strategy"
-                value={chunkStrategy}
-                onChange={(e) => setChunkStrategy(e.target.value)}
-                className="w-full px-4 py-3 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              >
-                {chunkStrategies.map((strategy) => (
-                  <option key={strategy.value} value={strategy.value}>
-                    {strategy.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="embedding_model"
-                className="block text-sm font-medium text-foreground"
-              >
-                Embedding Modeli
-              </label>
-              <select
-                id="embedding_model"
-                value={embeddingModel}
-                onChange={(e) => setEmbeddingModel(e.target.value)}
-                className="w-full px-4 py-3 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              >
-                {embeddingModels.map((model) => (
-                  <option key={model.value} value={model.value}>
-                    {model.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="chunk_size"
-                className="block text-sm font-medium text-foreground"
-              >
-                Parça Boyutu
-              </label>
-              <input
-                type="number"
-                id="chunk_size"
-                value={chunkSize}
-                onChange={(e) => setChunkSize(Number(e.target.value))}
-                min="100"
-                max="4000"
-                step="100"
-                className="w-full px-4 py-3 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="chunk_overlap"
-                className="block text-sm font-medium text-foreground"
-              >
-                Parça Çakışması
-              </label>
-              <input
-                type="number"
-                id="chunk_overlap"
-                value={chunkOverlap}
-                onChange={(e) => setChunkOverlap(Number(e.target.value))}
-                min="0"
-                max="1000"
-                step="50"
-                className="w-full px-4 py-3 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
             </div>
           </div>
+        )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={selectedFiles.length === 0 || processing}
-            className="w-full py-4 px-6 bg-primary text-primary-foreground rounded-lg font-medium text-sm flex items-center justify-center gap-3 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[3rem] touch-manipulation"
-          >
-            {processing ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground border-t-transparent"></div>
-                <span>İşleniyor...</span>
-              </>
-            ) : (
-              <>
-                <PlayIcon />
-                <span>RAG Konfigürasyonunu Çalıştır</span>
-              </>
-            )}
-          </button>
-        </form>
+        <div className="text-center text-muted-foreground text-sm">
+          <p>
+            Markdown dosyalarını seçip işlemek için yukarıdaki butona tıklayın
+          </p>
+          <p className="text-xs mt-1">
+            Dosyalar işlenirken modal'ı kapatabilir, işlem arka planda devam
+            eder
+          </p>
+        </div>
       </div>
 
       {/* Chunks Visualization Section */}
@@ -572,6 +432,17 @@ export default function SessionPage() {
           </>
         )}
       </div>
+
+      {/* File Upload Modal */}
+      <FileUploadModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        sessionId={sessionId}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+        isProcessing={processing}
+        setIsProcessing={setProcessing}
+      />
     </div>
   );
 }
