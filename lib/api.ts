@@ -82,10 +82,13 @@ export async function createSession(data: {
 }
 
 export async function uploadDocument(form: FormData): Promise<any> {
-  const res = await fetch(`${getApiUrl()}/documents/upload`, {
-    method: "POST",
-    body: form,
-  });
+  const res = await fetch(
+    `${getApiUrl()}/documents/convert-document-to-markdown`,
+    {
+      method: "POST",
+      body: form,
+    }
+  );
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
@@ -142,28 +145,29 @@ export async function addMarkdownDocumentsToSession(
   message: string;
   errors?: string[];
 }> {
-  const res = await fetch(`${getApiUrl()}/sessions/add-markdown-documents`, {
+  const formData = new FormData();
+  formData.append("session_id", sessionId);
+  formData.append("markdown_files", JSON.stringify(filenames));
+  formData.append("chunk_strategy", "semantic");
+  formData.append("chunk_size", "1000");
+  formData.append("chunk_overlap", "100");
+  formData.append("embedding_model", "mixedbread-ai/mxbai-embed-large-v1");
+
+  const res = await fetch(`${getApiUrl()}/documents/process-and-store`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      session_id: sessionId,
-      markdown_files: filenames,
-    }),
+    body: formData,
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function getChunksForSession(sessionId: string): Promise<Chunk[]> {
-  const res = await fetch(
-    `${getApiUrl()}/rag/chunks/${encodeURIComponent(sessionId)}`,
-    {
-      cache: "no-store",
-    }
+  // Since the API Gateway doesn't have a chunks endpoint, return empty array for now
+  // This functionality would need to be implemented in the API Gateway if needed
+  console.warn(
+    "getChunksForSession: API endpoint not available in gateway, returning empty array"
   );
-  if (!res.ok) throw new Error("Failed to fetch chunks for session");
-  const data: SessionChunksResponse = await res.json();
-  return data.chunks;
+  return [];
 }
 
 export async function getMarkdownFileContent(
@@ -193,10 +197,17 @@ export async function configureAndProcess(data: {
   total_chunks: number;
   processing_time?: number;
 }> {
-  const res = await fetch(`${getApiUrl()}/rag/configure-and-process`, {
+  const formData = new FormData();
+  formData.append("session_id", data.session_id);
+  formData.append("markdown_files", JSON.stringify(data.markdown_files));
+  formData.append("chunk_strategy", data.chunk_strategy);
+  formData.append("chunk_size", data.chunk_size.toString());
+  formData.append("chunk_overlap", data.chunk_overlap.toString());
+  formData.append("embedding_model", data.embedding_model);
+
+  const res = await fetch(`${getApiUrl()}/documents/process-and-store`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body: formData,
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
@@ -225,7 +236,7 @@ export async function checkApiHealth(): Promise<{ status: string }> {
 }
 
 export async function listAvailableModels(): Promise<{ models: string[] }> {
-  const res = await fetch(`${getApiUrl()}/models/list`, {
+  const res = await fetch(`${getApiUrl()}/models`, {
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch available models");
@@ -241,9 +252,12 @@ export type ChangelogEntry = {
 };
 
 export async function getChangelog(): Promise<ChangelogEntry[]> {
-  const res = await fetch(`${getApiUrl()}/changelog`, { cache: "no-store" });
-  if (!res.ok) throw new Error("Failed to fetch changelog");
-  return res.json();
+  // Changelog functionality not available in API Gateway
+  // Return empty array or mock data for now
+  console.warn(
+    "getChangelog: API endpoint not available in gateway, returning empty array"
+  );
+  return [];
 }
 
 export async function createChangelogEntry(data: {
@@ -251,11 +265,7 @@ export async function createChangelogEntry(data: {
   date: string;
   changes: string[];
 }): Promise<ChangelogEntry> {
-  const res = await fetch(`${getApiUrl()}/changelog`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  // Changelog functionality not available in API Gateway
+  console.warn("createChangelogEntry: API endpoint not available in gateway");
+  throw new Error("Changelog functionality not available");
 }
